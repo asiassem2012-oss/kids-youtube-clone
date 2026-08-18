@@ -1,5 +1,5 @@
 // ============================================
-// script.js - جميع الوظائف المشتركة
+// script.js - جميع الوظائف المشتركة (نسخة مصححة)
 // ============================================
 
 // ===== المتغيرات العامة =====
@@ -12,7 +12,7 @@ const DEFAULT_PIN = "1234";
 
 // ===== إعدادات إعلانات Kidoz =====
 const KIDOZ_PUBLISHER_ID = "15840";
-let midRollInterval = null;
+let midRollInterval = null; // تم إبقاء هذا التعريف الموحد فقط
 
 // ===== عناصر DOM =====
 const videosContainer = document.getElementById('videos_container');
@@ -330,7 +330,6 @@ document.addEventListener('DOMContentLoaded', () => {
 // Publisher ID: 15840
 // ==========================================
 
-// تحميل مكتبة Kidoz SDK تلقائياً بالرابط المحدث
 (function loadKidozSDK() {
     const script = document.createElement('script');
     script.src = "https://sdk.kidoz.net/js/kidoz.js";
@@ -345,16 +344,18 @@ document.addEventListener('DOMContentLoaded', () => {
     document.head.appendChild(script);
 })();
 
-// أ. تشغيل البنرات العلوية والسفلية
 function initBannerAds() {
     if (window.Kidoz) {
-        if (document.getElementById('top-banner-ad')) {
+        const topBanner = document.getElementById('top-banner-ad');
+        const footerBanner = document.getElementById('footer-banner-ad');
+        
+        if (topBanner) {
             Kidoz.showBanner({
                 publisherId: KIDOZ_PUBLISHER_ID,
                 containerId: 'top-banner-ad'
             });
         }
-        if (document.getElementById('footer-banner-ad')) {
+        if (footerBanner) {
             Kidoz.showBanner({
                 publisherId: KIDOZ_PUBLISHER_ID,
                 containerId: 'footer-banner-ad'
@@ -363,7 +364,6 @@ function initBannerAds() {
     }
 }
 
-// ب. إعلان بداية كل فيديو (Pre-roll Ad)
 function playVideoWithAd(videoId) {
     const adModal = document.getElementById('ad-modal-overlay');
     const skipBtn = document.getElementById('skip-ad-btn');
@@ -400,7 +400,6 @@ function playVideoWithAd(videoId) {
     }
 }
 
-// ج. إعلان كل 5 دقائق مشاهدة (Mid-roll Ad)
 function start5MinMidRollTimer() {
     if (midRollInterval) clearInterval(midRollInterval);
 
