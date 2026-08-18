@@ -1,5 +1,5 @@
 // ============================================
-// script.js - جميع الوظائف مع إعلانات Kidoz
+// script.js - جميع الوظائف مع محاكاة إعلانات Kidoz
 // ============================================
 
 // ===== المتغيرات العامة =====
@@ -196,7 +196,7 @@ function loadWatchPage() {
 
             loadRecommendations(videoId);
             
-            // تشغيل إعلان عند دخول فيديو جديد
+            // تشغيل إعلان عند مشاهدة الفيديو
             playVideoWithAd(videoId);
         })
         .catch(err => {
@@ -316,42 +316,12 @@ function initParentalControl() {
     checkDailyLock();
 }
 
-// ===== تشغيل التطبيق =====
-document.addEventListener('DOMContentLoaded', () => {
-    if (!window.location.pathname.includes('watch.html') && !window.location.pathname.includes('admin.html')) {
-        loadVideos();
-        setupSearch();
-    }
-    if (window.location.pathname.includes('watch.html')) {
-        loadWatchPage();
-    }
-    initParentalControl();
-});
-
-// ==========================================
-// Kidoz Ads Engine (محدث)
-// ==========================================
-
-(function loadKidozSDK() {
-    // استخدام الرابط الرسمي لتضمين Kidoz Web Tag
-    const script = document.createElement('script');
-    script.src = "https://cdn.kidoz.net/sdk/js/kidoz.web.sdk.js";
-    script.async = true;
-    script.onload = () => {
-        console.log("Kidoz SDK Loaded Successfully.");
-        if (window.Kidoz) {
-            window.Kidoz.init({ publisherId: KIDOZ_PUBLISHER_ID });
-        }
-    };
-    script.onerror = () => {
-        console.warn("Kidoz SDK Load Failed - Ad Blockers or network restriction might be active.");
-    };
-    document.head.appendChild(script);
-})();
-
+// ===== نظام تشغيل وتجربة الإعلانات =====
 function playVideoWithAd(videoId) {
     const adModal = document.getElementById('ad-modal-overlay');
     const skipBtn = document.getElementById('skip-ad-btn');
+    const adContainer = document.getElementById('kidoz-video-ad-container');
+    
     if (!adModal || !skipBtn) return;
 
     let countdown = 5;
@@ -359,8 +329,14 @@ function playVideoWithAd(videoId) {
     skipBtn.disabled = true;
     skipBtn.innerText = `يمكنك التخطي بعد ${countdown} ثوانٍ`;
 
-    if (window.Kidoz && typeof window.Kidoz.showInterstitial === 'function') {
-        window.Kidoz.showInterstitial();
+    if (adContainer) {
+        adContainer.innerHTML = `
+            <div style="text-align: center; padding: 20px;">
+                <h3 style="color: #ff9800; margin-bottom: 10px;">🎮 إعلان للأطفال (Kidoz Ads)</h3>
+                <p>استمتع بأحدث الألعاب والأنشطة الآمنة للأطفال!</p>
+                <small style="color: #888;">Publisher ID: ${KIDOZ_PUBLISHER_ID}</small>
+            </div>
+        `;
     }
 
     const timer = setInterval(() => {
@@ -387,3 +363,15 @@ function start5MinMidRollTimer() {
         playVideoWithAd(null);
     }, 5 * 60 * 1000);
 }
+
+// ===== تشغيل التطبيق =====
+document.addEventListener('DOMContentLoaded', () => {
+    if (!window.location.pathname.includes('watch.html') && !window.location.pathname.includes('admin.html')) {
+        loadVideos();
+        setupSearch();
+    }
+    if (window.location.pathname.includes('watch.html')) {
+        loadWatchPage();
+    }
+    initParentalControl();
+});
