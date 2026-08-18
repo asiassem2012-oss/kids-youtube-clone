@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة تحكم المشرف - YouTube Clone</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        .admin-container {
+            max-width: 1200px;
+            margin: 80px auto 30px;
+            padding: 0 20px;
+        }
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--border-color);
+        }
+        .admin-header h1 {
+            font-size: 28px;
+            color: var(--accent-red);
+        }
+        .admin-header .back-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .admin-header .back-link:hover {
+            color: var(--text-primary);
+        }
+        .video-form {
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 40px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            align-items: end;
+        }
+        .video-form .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .video-form label {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+        .video-form input, .video-form select {
+            padding: 10px 14px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-secondary);
+            color: #fff;
+            font-size: 15px;
+            outline: none;
+        }
+        .video-form input:focus, .video-form select:focus {
+            border-color: var(--accent-blue);
+        }
+        .video-form .form-actions {
+            display: flex;
+            gap: 10px;
+        }
+        .video-form .btn-save {
+            background: var(--accent-blue);
+            color: #fff;
+            border: none;
+            padding: 10px 28px;
+            border-radius: 30px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            height: 42px;
+        }
+        .video-form .btn-save:hover {
+            background: #2d8fcf;
+        }
+        .video-form .btn-cancel {
+            background: var(--bg-hover);
+            color: var(--text-secondary);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-weight: 500;
+            cursor: pointer;
+            height: 42px;
+        }
+        .video-form .btn-cancel:hover {
+            color: #fff;
+        }
+        .videos-table-wrapper {
+            overflow-x: auto;
+            background: var(--card-bg);
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            padding: 10px;
+        }
+        .videos-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+            min-width: 600px;
+        }
+        .videos-table th {
+            text-align: right;
+            padding: 14px 12px;
+            color: var(--text-secondary);
+            border-bottom: 2px solid var(--border-color);
+            font-weight: 600;
+        }
+        .videos-table td {
+            padding: 12px;
+            border-bottom: 1px solid var(--border-color);
+            vertical-align: middle;
+        }
+        .videos-table tr:hover {
+            background: var(--bg-hover);
+        }
+        .videos-table .thumbnail-cell img {
+            width: 80px;
+            aspect-ratio: 16/9;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+        .videos-table .actions-cell {
+            display: flex;
+            gap: 8px;
+        }
+        .videos-table .actions-cell button {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 6px 10px;
+            border-radius: 8px;
+            transition: all 0.2s;
+            font-size: 20px;
+        }
+        .videos-table .actions-cell .edit-btn:hover {
+            background: var(--accent-blue);
+            color: #fff;
+        }
+        .videos-table .actions-cell .delete-btn:hover {
+            background: var(--accent-red);
+            color: #fff;
+        }
+        .no-videos-msg {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-secondary);
+            font-size: 18px;
+        }
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 30px;
+            background: var(--card-bg);
+            color: #fff;
+            padding: 14px 28px;
+            border-radius: 12px;
+            border-left: 5px solid var(--accent-blue);
+            box-shadow: var(--shadow);
+            z-index: 9999;
+            font-weight: 500;
+            display: none;
+        }
+        .toast.error {
+            border-left-color: var(--accent-red);
+        }
+    </style>
+</head>
+<body>
+
+    <header class="header">
+        <div class="header-left">
+            <i class="material-icons" onclick="window.location.href='index.html'">arrow_back</i>
+            <div class="logo">YouTube <span>Admin</span></div>
+        </div>
+        <div class="header-center">
+            <span style="color:var(--text-secondary);">لوحة التحكم</span>
+        </div>
+        <div class="header-right">
+            <span id="admin_status" style="color:#4caf50; font-weight:bold;">✅ مشرف</span>
+            <i class="material-icons" id="parent_btn" title="الرقابة الأبوية">timer</i>
+            <img src="images/profile.jpg" alt="profile" class="header-avatar">
+        </div>
+    </header>
+
+    <div class="admin-container">
+        <div class="admin-header">
+            <h1>📹 إدارة الفيديوهات</h1>
+            <a href="index.html" class="back-link"><i class="material-icons">home</i> العودة للرئيسية</a>
+        </div>
+
+        <form id="video_form" class="video-form">
+            <input type="hidden" id="edit_id" value="">
+            <div class="form-group">
+                <label for="video_title">عنوان الفيديو *</label>
+                <input type="text" id="video_title" placeholder="مثل: قصه قبل النوم" required>
+            </div>
+            <div class="form-group">
+                <label for="video_youtubeId">رابط YouTube ID *</label>
+                <input type="text" id="video_youtubeId" placeholder="مثل: NTo1xeRUdgc" required>
+            </div>
+            <div class="form-group">
+                <label for="video_category">التصنيف</label>
+                <select id="video_category">
+                    <option value="stories">📖 قصص</option>
+                    <option value="music">🎵 موسيقى</option>
+                    <option value="games">🎮 ألعاب</option>
+                    <option value="cartoon">🐱 كرتون</option>
+                    <option value="education">📚 تعليم</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="video_creator">اسم القناة</label>
+                <input type="text" id="video_creator" placeholder="Assem Code" value="Assem Code">
+            </div>
+            <div class="form-group">
+                <label for="video_views">عدد المشاهدات</label>
+                <input type="text" id="video_views" placeholder="150K views" value="100K views">
+            </div>
+            <div class="form-group">
+                <label for="video_time">الوقت</label>
+                <input type="text" id="video_time" placeholder="منذ 3 أيام" value="اليوم">
+            </div>
+            <div class="form-group form-actions">
+                <button type="submit" class="btn-save" id="save_btn">➕ إضافة فيديو</button>
+                <button type="button" class="btn-cancel" id="cancel_edit_btn" style="display:none;">إلغاء التعديل</button>
+            </div>
+        </form>
+
+        <div class="videos-table-wrapper">
+            <table class="videos-table">
+                <thead>
+                    <tr><th>الصورة</th><th>العنوان</th><th>التصنيف</th><th>القناة</th><th>الإجراءات</th></tr>
+                </thead>
+                <tbody id="admin_videos_body">
+                    <tr><td colspan="5" class="no-videos-msg">جاري تحميل الفيديوهات...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="parent_overlay" class="parent_overlay" style="display: none;">
+        <div class="overlay_card">
+            <i class="material-icons">lock</i>
+            <h2>انتهى وقت المشاهدة المسموح به اليوم!</h2>
+            <p>يرجى العودة غداً أو طلب إذن ولي الأمر للفتح.</p>
+            <div class="pin_box">
+                <input type="password" id="parent_pin_input" placeholder="أدخل رمز PIN">
+                <button id="unlock_btn">إلغاء القفل</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast">تم الحفظ بنجاح!</div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBDIAFYC_cyQJKUPTAbNbFWKaay_iss7ls",
+            authDomain: "yotube-clone-72a6d.firebaseapp.com",
+            projectId: "yotube-clone-72a6d",
+            storageBucket: "yotube-clone-72a6d.firebasestorage.app",
+            messagingSenderId: "237883115992",
+            appId: "1:237883115992:web:2aef12d44925a8dd470aad",
+            measurementId: "G-06GW1D9DQV"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        let editingId = null;
+        const form = document.getElementById('video_form');
+        const titleInput = document.getElementById('video_title');
+        const youtubeIdInput = document.getElementById('video_youtubeId');
+        const categorySelect = document.getElementById('video_category');
+        const creatorInput = document.getElementById('video_creator');
+        const viewsInput = document.getElementById('video_views');
+        const timeInput = document.getElementById('video_time');
+        const editIdHidden = document.getElementById('edit_id');
+        const saveBtn = document.getElementById('save_btn');
+        const cancelBtn = document.getElementById('cancel_edit_btn');
+        const tbody = document.getElementById('admin_videos_body');
+        const toast = document.getElementById('toast');
+
+        function showToast(msg, isError = false) {
+            toast.innerText = msg;
+            toast.className = 'toast' + (isError ? ' error' : '');
+            toast.style.display = 'block';
+            clearTimeout(toast._timer);
+            toast._timer = setTimeout(() => { toast.style.display = 'none'; }, 3000);
+        }
+
+        auth.onAuthStateChanged(async (user) => {
+            if (!user) { window.location.href = 'index.html'; return; }
+            try {
+                const doc = await db.collection('users').doc(user.uid).get();
+                if (doc.exists && doc.data().isAdmin === true) {
+                    document.getElementById('admin_status').innerText = '✅ مشرف';
+                    loadVideosForAdmin();
+                } else {
+                    showToast('⚠️ ليس لديك صلاحية للدخول إلى لوحة التحكم.', true);
+                    setTimeout(() => { window.location.href = 'index.html'; }, 2000);
+                }
+            } catch (err) {
+                showToast('خطأ في التحقق من الصلاحية', true);
+            }
+        });
+
+        function loadVideosForAdmin() {
+            db.collection('videos').orderBy('timestamp', 'desc').get()
+                .then(snapshot => {
+                    if (snapshot.empty) {
+                        tbody.innerHTML = `<tr><td colspan="5" class="no-videos-msg">📭 لا توجد فيديوهات حتى الآن.</td></tr>`;
+                        return;
+                    }
+                    let rows = '';
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        const id = doc.id;
+                        const thumb = data.thumbnail || `https://img.youtube.com/vi/${data.youtubeId}/hqdefault.jpg`;
+                        rows += `
+                            <tr>
+                                <td class="thumbnail-cell"><img src="${thumb}" alt="${data.title}"></td>
+                                <td><strong>${data.title}</strong></td>
+                                <td>${data.category || 'عام'}</td>
+                                <td>${data.creator || 'غير معروف'}</td>
+                                <td class="actions-cell">
+                                    <button class="edit-btn" data-id="${id}" title="تعديل"><i class="material-icons">edit</i></button>
+                                    <button class="delete-btn" data-id="${id}" title="حذف"><i class="material-icons">delete</i></button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                    tbody.innerHTML = rows;
+                    document.querySelectorAll('.edit-btn').forEach(btn => btn.addEventListener('click', () => editVideo(btn.dataset.id)));
+                    document.querySelectorAll('.delete-btn').forEach(btn => btn.addEventListener('click', () => deleteVideo(btn.dataset.id)));
+                })
+                .catch(() => {
+                    tbody.innerHTML = `<tr><td colspan="5" class="no-videos-msg">⚠️ حدث خطأ أثناء التحميل</td></tr>`;
+                });
+        }
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const title = titleInput.value.trim();
+            const youtubeId = youtubeIdInput.value.trim();
+            if (!title || !youtubeId) { showToast('الرجاء ملء الحقول المطلوبة (*)', true); return; }
+
+            const data = {
+                title, youtubeId,
+                category: categorySelect.value,
+                creator: creatorInput.value.trim() || 'Assem Code',
+                views: viewsInput.value.trim() || '100K views',
+                time: timeInput.value.trim() || 'اليوم',
+                thumbnail: `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`,
+                timestamp: Date.now()
+            };
+
+            try {
+                if (editingId) {
+                    await db.collection('videos').doc(editingId).update(data);
+                    showToast('✅ تم تحديث الفيديو بنجاح!');
+                } else {
+                    await db.collection('videos').add(data);
+                    showToast('✅ تم إضافة الفيديو بنجاح!');
+                }
+                resetForm();
+                loadVideosForAdmin();
+            } catch (err) {
+                showToast('❌ فشل الحفظ: ' + err.message, true);
+            }
+        });
+
+        function editVideo(id) {
+            db.collection('videos').doc(id).get().then(doc => {
+                if (!doc.exists) { showToast('الفيديو غير موجود', true); return; }
+                const data = doc.data();
+                editingId = id;
+                editIdHidden.value = id;
+                titleInput.value = data.title || '';
+                youtubeIdInput.value = data.youtubeId || '';
+                categorySelect.value = data.category || 'stories';
+                creatorInput.value = data.creator || 'Assem Code';
+                viewsInput.value = data.views || '100K views';
+                timeInput.value = data.time || 'اليوم';
+                saveBtn.innerText = '💾 تحديث الفيديو';
+                cancelBtn.style.display = 'block';
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }).catch(err => showToast('خطأ في التحميل', true));
+        }
+
+        function deleteVideo(id) {
+            if (!confirm('هل أنت متأكد من حذف هذا الفيديو نهائياً؟')) return;
+            db.collection('videos').doc(id).delete()
+                .then(() => { showToast('🗑️ تم حذف الفيديو'); if (editingId === id) resetForm(); loadVideosForAdmin(); })
+                .catch(err => showToast('فشل الحذف: ' + err.message, true));
+        }
+
+        cancelBtn.addEventListener('click', resetForm);
+        function resetForm() {
+            editingId = null;
+            editIdHidden.value = '';
+            form.reset();
+            creatorInput.value = 'Assem Code';
+            viewsInput.value = '100K views';
+            timeInput.value = 'اليوم';
+            saveBtn.innerText = '➕ إضافة فيديو';
+            cancelBtn.style.display = 'none';
+        }
+
+        // الرقابة الأبوية
+        const DEFAULT_PIN = "1234";
+        const parentBtn = document.getElementById('parent_btn');
+        const overlay = document.getElementById('parent_overlay');
+        const unlockBtn = document.getElementById('unlock_btn');
+        const pinInput = document.getElementById('parent_pin_input');
+
+        function checkDailyLock() {
+            const lockDate = localStorage.getItem('timer_lock_date');
+            const today = new Date().toDateString();
+            if (lockDate === today) { if (overlay) overlay.style.display = 'flex'; } 
+            else { if (lockDate) localStorage.removeItem('timer_lock_date'); checkTimerCountdown(); }
+        }
+        function checkTimerCountdown() {
+            const expireTime = localStorage.getItem('timer_expire_time');
+            if (!expireTime) return;
+            const remaining = expireTime - Date.now();
+            if (remaining <= 0) {
+                const today = new Date().toDateString();
+                localStorage.setItem('timer_lock_date', today);
+                localStorage.removeItem('timer_expire_time');
+                if (overlay) overlay.style.display = 'flex';
+            } else {
+                setTimeout(() => {
+                    const today = new Date().toDateString();
+                    localStorage.setItem('timer_lock_date', today);
+                    localStorage.removeItem('timer_expire_time');
+                    if (overlay) overlay.style.display = 'flex';
+                }, remaining);
+            }
+        }
+        if (parentBtn) {
+            parentBtn.addEventListener('click', () => {
+                const enteredPin = prompt("أدخل الرقم السري لولي الأمر (الافتراضي: 1234):");
+                if (enteredPin === DEFAULT_PIN) {
+                    const minutes = parseInt(prompt("أدخل وقت المشاهدة المسموح به بالدقائق:"), 10);
+                    if (minutes && minutes > 0) {
+                        localStorage.setItem('timer_expire_time', Date.now() + (minutes * 60 * 1000));
+                        localStorage.removeItem('timer_lock_date');
+                        alert(`تم ضبط الوقت لـ ${minutes} دقيقة بنجاح!`);
+                    }
+                } else if (enteredPin !== null) alert("الرقم السري غير صحيح!");
+            });
+        }
+        if (unlockBtn && pinInput) {
+            unlockBtn.addEventListener('click', () => {
+                if (pinInput.value === DEFAULT_PIN) {
+                    localStorage.removeItem('timer_lock_date');
+                    localStorage.removeItem('timer_expire_time');
+                    overlay.style.display = 'none';
+                    pinInput.value = '';
+                    alert("تم فتح الموقع بنجاح!");
+                } else alert("الرمز السري غير صحيح!");
+            });
+        }
+        checkDailyLock();
+    </script>
+</body>
+</html>

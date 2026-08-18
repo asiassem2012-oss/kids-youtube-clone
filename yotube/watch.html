@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مشاهدة الفيديو - YouTube Clone</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+</head>
+<body>
+    <!-- ===== شريط التنقل ===== -->
+    <header class="header">
+        <div class="header-left">
+            <i class="material-icons" onclick="window.location.href='index.html'">arrow_back</i>
+            <div class="logo">YouTube <span>Clone</span></div>
+        </div>
+        <div class="header-center">
+            <input type="text" id="search_input" placeholder="بحث...">
+            <button><i class="material-icons">search</i></button>
+        </div>
+        <div class="header-right">
+            <button id="login_btn" style="background:#065fd4; color:#fff; border:none; padding:6px 12px; border-radius:18px; cursor:pointer; font-weight:bold;">تسجيل الدخول</button>
+            <span id="user_status" style="display:none; font-size:12px; padding:4px 8px; border-radius:4px; font-weight:bold;"></span>
+            <i class="material-icons" id="parent_btn" title="الرقابة الأبوية">timer</i>
+            <i class="material-icons">video_call</i>
+            <i class="material-icons">notifications</i>
+            <img src="images/profile.jpg" alt="profile" class="header-avatar">
+        </div>
+    </header>
+
+    <!-- ===== محتوى المشاهدة ===== -->
+    <div class="watch_container">
+        <div class="main_video">
+            <div class="video_player_box">
+                <iframe 
+                    src="" 
+                    title="YouTube Video Player" 
+                    frameborder="0" 
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                    allowfullscreen>
+                </iframe>
+            </div>
+            <h2 class="watch_title">جاري تحميل العنوان...</h2>
+            <div class="video_details_bar">
+                <div class="channel_info">
+                    <img src="images/profile.jpg" alt="Channel" id="channel_pic">
+                    <div>
+                        <h3 id="channel_name">Assem Code</h3>
+                        <span id="subscribers_count">150K Subscribers</span>
+                    </div>
+                    <button id="subscribe_btn" class="subscribe_btn">Subscribe</button>
+                </div>
+                <div class="video_actions">
+                    <button id="like_btn" class="action_btn">
+                        <i class="material-icons">thumb_up</i>
+                        <span id="likes_count">12000</span>
+                    </button>
+                    <button class="action_btn">
+                        <i class="material-icons">share</i> Share
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="recommended_videos" id="recommended_container">
+            <!-- سيتم تحميلها بواسطة JavaScript -->
+        </div>
+    </div>
+
+    <!-- ===== شاشة القفل ===== -->
+    <div id="parent_overlay" class="parent_overlay" style="display: none;">
+        <div class="overlay_card">
+            <i class="material-icons">lock</i>
+            <h2>انتهى وقت المشاهدة المسموح به اليوم!</h2>
+            <p>يرجى العودة غداً أو طلب إذن ولي الأمر للفتح.</p>
+            <div class="pin_box">
+                <input type="password" id="parent_pin_input" placeholder="أدخل رمز PIN">
+                <button id="unlock_btn">إلغاء القفل</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== Firebase ===== -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBDIAFYC_cyQJKUPTAbNbFWKaay_iss7ls",
+            authDomain: "yotube-clone-72a6d.firebaseapp.com",
+            projectId: "yotube-clone-72a6d",
+            storageBucket: "yotube-clone-72a6d.firebasestorage.app",
+            messagingSenderId: "237883115992",
+            appId: "1:237883115992:web:2aef12d44925a8dd470aad",
+            measurementId: "G-06GW1D9DQV"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+    </script>
+    <script>
+    // إعدادات Firebase
+    const firebaseConfig = {
+        apiKey: "AIzaSyBDIAFYC_cyQJKUPTAbNbFWKaay_iss7ls",
+        authDomain: "yotube-clone-72a6d.firebaseapp.com",
+        projectId: "yotube-clone-72a6d",
+        storageBucket: "yotube-clone-72a6d.firebasestorage.app",
+        messagingSenderId: "237883115992",
+        appId: "1:237883115992:web:2aef12d44925a8dd470aad",
+        measurementId: "G-06GW1D9DQV"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    // ===== تسجيل الدخول باستخدام Redirect =====
+    const loginBtn = document.getElementById('login_btn');
+    const userStatus = document.getElementById('user_status');
+    const adBanner = document.getElementById('ad_banner');
+
+    async function updateUserUI(user) {
+        if (user) {
+            loginBtn.innerText = "تسجيل الخروج";
+            try {
+                const doc = await db.collection('users').doc(user.uid).get();
+                if (doc.exists && doc.data().isPro) {
+                    adBanner.style.display = 'none';
+                    userStatus.style.display = 'inline-block';
+                    userStatus.style.background = '#d4edda';
+                    userStatus.style.color = '#155724';
+                    userStatus.innerText = 'حساب مميز ⭐ Pro';
+                } else {
+                    adBanner.style.display = 'block';
+                    userStatus.style.display = 'inline-block';
+                    userStatus.style.background = '#e2e3e5';
+                    userStatus.style.color = '#383d41';
+                    userStatus.innerText = 'حساب مجاني';
+                    if (!doc.exists) {
+                        await db.collection('users').doc(user.uid).set({
+                            name: user.displayName,
+                            email: user.email,
+                            isPro: false
+                        });
+                    }
+                }
+            } catch (err) {
+                console.warn(err);
+            }
+        } else {
+            loginBtn.innerText = "تسجيل الدخول";
+            userStatus.style.display = 'none';
+            adBanner.style.display = 'block';
+        }
+    }
+
+    // معالجة نتيجة Redirect
+    auth.getRedirectResult()
+        .then((result) => {
+            if (result.user) {
+                console.log('✅ تم تسجيل الدخول:', result.user.displayName);
+            }
+        })
+        .catch((error) => {
+            console.error('❌ خطأ في تسجيل الدخول:', error.message);
+            if (error.code === 'auth/unauthorized-domain') {
+                alert('⚠️ هذا النطاق غير مسموح به. تأكد من إضافة localhost إلى Authorized Domains في Firebase Console.');
+            } else {
+                alert('فشل تسجيل الدخول: ' + error.message);
+            }
+        });
+
+    loginBtn.addEventListener('click', () => {
+        if (auth.currentUser) {
+            auth.signOut();
+        } else {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            auth.signInWithRedirect(provider);
+        }
+    });
+
+    auth.onAuthStateChanged(async (user) => {
+        await updateUserUI(user);
+    });
+</script>
+    <script src="script.js"></script>
+</body>
+</html>
