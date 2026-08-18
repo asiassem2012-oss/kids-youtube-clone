@@ -431,7 +431,7 @@ function start5MinMidRollTimer() {
 // Publisher ID: 15840
 // ==========================================
 
-const KIDOZ_PUBLISHER_ID = "15840"; 
+ 
 let midRollInterval = null;
 
 // تحميل مكتبة Kidoz SDK تلقائياً بالرابط الصحيح
