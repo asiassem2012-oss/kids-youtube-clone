@@ -414,7 +414,7 @@ function playVideoWithAd(videoId) {
 }
 
 // ------------------------------------------
-// ج. إعلان كل 5 دقائق مشاهدة (Mid-roll Ad)
+// ج. إعلان كل 5 دقائق مشاهدة (Mid-roll Ad)            
 // ------------------------------------------
 function start5MinMidRollTimer() {
     // إعادة ضبط المؤقت
@@ -424,5 +424,106 @@ function start5MinMidRollTimer() {
     midRollInterval = setInterval(() => {
         pauseMainVideo();          // إيقاف الفيديو الأصلي مؤقتاً
         playVideoWithAd(null);     // إظهار الإعلان المطور
+    }, 5 * 60 * 1000);
+}
+// ==========================================
+// Kidoz Ads Integration - Kids YouTube Clone
+// Publisher ID: 15840
+// ==========================================
+
+const KIDOZ_PUBLISHER_ID = "15840"; 
+let midRollInterval = null;
+
+// تحميل مكتبة Kidoz SDK تلقائياً بالرابط الصحيح
+(function loadKidozSDK() {
+    const script = document.createElement('script');
+    script.src = "https://sdk.kidoz.net/js/kidoz.js";
+    script.async = true;
+    script.onload = () => {
+        console.log("Kidoz SDK Loaded Successfully for Publisher: " + KIDOZ_PUBLISHER_ID);
+        initBannerAds(); // تشغيل البنرات العلوية والسفلية بمجرد التحميل
+    };
+    script.onerror = () => {
+        console.warn("Kidoz SDK failed to load or is being blocked.");
+    };
+    document.head.appendChild(script);
+})();
+
+// ------------------------------------------
+// أ. تشغيل البنرات العلوية والسفلية
+// ------------------------------------------
+function initBannerAds() {
+    if (window.Kidoz) {
+        // بنر أعلى الصفحة
+        if (document.getElementById('top-banner-ad')) {
+            Kidoz.showBanner({
+                publisherId: KIDOZ_PUBLISHER_ID,
+                containerId: 'top-banner-ad'
+            });
+        }
+
+        // بنر أسفل الصفحة
+        if (document.getElementById('footer-banner-ad')) {
+            Kidoz.showBanner({
+                publisherId: KIDOZ_PUBLISHER_ID,
+                containerId: 'footer-banner-ad'
+            });
+        }
+    }
+}
+
+// ------------------------------------------
+// ب. إعلان بداية كل فيديو (Pre-roll Ad)
+// ------------------------------------------
+function playVideoWithAd(videoId) {
+    const adModal = document.getElementById('ad-modal-overlay');
+    const skipBtn = document.getElementById('skip-ad-btn');
+    let countdown = 5;
+
+    if (adModal && skipBtn) {
+        // إظهار نافذة الإعلان
+        adModal.style.display = 'flex';
+        skipBtn.disabled = true;
+        skipBtn.innerText = `يمكنك التخطي بعد ${countdown} ثوانٍ`;
+
+        // طلب الإعلان من Kidoz
+        if (window.Kidoz) {
+            Kidoz.showInterstitial({
+                publisherId: KIDOZ_PUBLISHER_ID,
+                containerId: 'kidoz-video-ad-container'
+            });
+        }
+
+        // العداد التنازلي للتخطي (5 ثوانٍ)
+        const timer = setInterval(() => {
+            countdown--;
+            if (countdown > 0) {
+                skipBtn.innerText = `يمكنك التخطي بعد ${countdown} ثوانٍ`;
+            } else {
+                clearInterval(timer);
+                skipBtn.innerText = "تخطي الإعلان ⏭️";
+                skipBtn.disabled = false;
+            }
+        }, 1000);
+
+        // عند الضغط على زر التخطي
+        skipBtn.onclick = function () {
+            adModal.style.display = 'none';
+            if (typeof startMainVideo === 'function') startMainVideo(videoId);
+            start5MinMidRollTimer();
+        };
+    }
+}
+
+// ------------------------------------------
+// ج. إعلان كل 5 دقائق مشاهدة (Mid-roll Ad)
+// ------------------------------------------
+function start5MinMidRollTimer() {
+    if (midRollInterval) clearInterval(midRollInterval);
+
+    // 300,000 ملي ثانية = 5 دقائق
+    midRollInterval = setInterval(() => {
+        if (typeof pauseMainVideo === 'function') pauseMainVideo();
+        playVideoWithAd(null);
     }, 5 * 60 * 1000);
 }
