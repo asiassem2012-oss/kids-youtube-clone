@@ -1,5 +1,5 @@
 // ============================================
-// script.js - جميع الوظائف المشتركة (نسخة مصححة)
+// script.js - جميع الوظائف مع إعلانات Kidoz
 // ============================================
 
 // ===== المتغيرات العامة =====
@@ -10,9 +10,9 @@ const videosPerPage = 12;
 let selectedCategory = 'all';
 const DEFAULT_PIN = "1234";
 
-// ===== إعدادات إعلانات Kidoz =====
+// ===== إعدادات Kidoz =====
 const KIDOZ_PUBLISHER_ID = "15840";
-let midRollInterval = null; // تم إبقاء هذا التعريف الموحد فقط
+let midRollInterval = null;
 
 // ===== عناصر DOM =====
 const videosContainer = document.getElementById('videos_container');
@@ -195,6 +195,9 @@ function loadWatchPage() {
             if (subsCount) subsCount.innerText = '150K Subscribers';
 
             loadRecommendations(videoId);
+            
+            // تشغيل إعلان عند دخول فيديو جديد
+            playVideoWithAd(videoId);
         })
         .catch(err => {
             console.error('خطأ في تحميل الفيديو:', err);
@@ -313,7 +316,7 @@ function initParentalControl() {
     checkDailyLock();
 }
 
-// ===== تشغيل كل شيء عند تحميل الصفحة =====
+// ===== تشغيل التطبيق =====
 document.addEventListener('DOMContentLoaded', () => {
     if (!window.location.pathname.includes('watch.html') && !window.location.pathname.includes('admin.html')) {
         loadVideos();
@@ -326,85 +329,61 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ==========================================
-// Kidoz Ads Integration - Kids YouTube Clone
-// Publisher ID: 15840
+// Kidoz Ads Engine (محدث)
 // ==========================================
 
 (function loadKidozSDK() {
+    // استخدام الرابط الرسمي لتضمين Kidoz Web Tag
     const script = document.createElement('script');
-    script.src = "https://sdk.kidoz.net/js/kidoz.js";
+    script.src = "https://cdn.kidoz.net/sdk/js/kidoz.web.sdk.js";
     script.async = true;
     script.onload = () => {
-        console.log("Kidoz SDK Loaded Successfully for Publisher: " + KIDOZ_PUBLISHER_ID);
-        initBannerAds();
+        console.log("Kidoz SDK Loaded Successfully.");
+        if (window.Kidoz) {
+            window.Kidoz.init({ publisherId: KIDOZ_PUBLISHER_ID });
+        }
     };
     script.onerror = () => {
-        console.warn("Kidoz SDK failed to load or is being blocked.");
+        console.warn("Kidoz SDK Load Failed - Ad Blockers or network restriction might be active.");
     };
     document.head.appendChild(script);
 })();
 
-function initBannerAds() {
-    if (window.Kidoz) {
-        const topBanner = document.getElementById('top-banner-ad');
-        const footerBanner = document.getElementById('footer-banner-ad');
-        
-        if (topBanner) {
-            Kidoz.showBanner({
-                publisherId: KIDOZ_PUBLISHER_ID,
-                containerId: 'top-banner-ad'
-            });
-        }
-        if (footerBanner) {
-            Kidoz.showBanner({
-                publisherId: KIDOZ_PUBLISHER_ID,
-                containerId: 'footer-banner-ad'
-            });
-        }
-    }
-}
-
 function playVideoWithAd(videoId) {
     const adModal = document.getElementById('ad-modal-overlay');
     const skipBtn = document.getElementById('skip-ad-btn');
+    if (!adModal || !skipBtn) return;
+
     let countdown = 5;
+    adModal.style.display = 'flex';
+    skipBtn.disabled = true;
+    skipBtn.innerText = `يمكنك التخطي بعد ${countdown} ثوانٍ`;
 
-    if (adModal && skipBtn) {
-        adModal.style.display = 'flex';
-        skipBtn.disabled = true;
-        skipBtn.innerText = `يمكنك التخطي بعد ${countdown} ثوانٍ`;
-
-        if (window.Kidoz) {
-            Kidoz.showInterstitial({
-                publisherId: KIDOZ_PUBLISHER_ID,
-                containerId: 'kidoz-video-ad-container'
-            });
-        }
-
-        const timer = setInterval(() => {
-            countdown--;
-            if (countdown > 0) {
-                skipBtn.innerText = `يمكنك التخطي بعد ${countdown} ثوانٍ`;
-            } else {
-                clearInterval(timer);
-                skipBtn.innerText = "تخطي الإعلان ⏭️";
-                skipBtn.disabled = false;
-            }
-        }, 1000);
-
-        skipBtn.onclick = function () {
-            adModal.style.display = 'none';
-            if (typeof startMainVideo === 'function') startMainVideo(videoId);
-            start5MinMidRollTimer();
-        };
+    if (window.Kidoz && typeof window.Kidoz.showInterstitial === 'function') {
+        window.Kidoz.showInterstitial();
     }
+
+    const timer = setInterval(() => {
+        countdown--;
+        if (countdown > 0) {
+            skipBtn.innerText = `يمكنك التخطي بعد ${countdown} ثوانٍ`;
+        } else {
+            clearInterval(timer);
+            skipBtn.innerText = "تخطي الإعلان ⏭️";
+            skipBtn.disabled = false;
+        }
+    }, 1000);
+
+    skipBtn.onclick = function () {
+        adModal.style.display = 'none';
+        start5MinMidRollTimer();
+    };
 }
 
 function start5MinMidRollTimer() {
     if (midRollInterval) clearInterval(midRollInterval);
 
     midRollInterval = setInterval(() => {
-        if (typeof pauseMainVideo === 'function') pauseMainVideo();
         playVideoWithAd(null);
     }, 5 * 60 * 1000);
 }
