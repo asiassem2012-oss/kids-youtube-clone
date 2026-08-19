@@ -1,5 +1,5 @@
 // ============================================
-// script.js - جميع الوظائف مع محاكاة إعلانات Kidoz
+// script.js - جميع الوظائف المشتركة
 // ============================================
 
 // ===== المتغيرات العامة =====
@@ -9,10 +9,6 @@ let currentPage = 1;
 const videosPerPage = 12;
 let selectedCategory = 'all';
 const DEFAULT_PIN = "1234";
-
-// ===== إعدادات Kidoz =====
-const KIDOZ_PUBLISHER_ID = "15840";
-let midRollInterval = null;
 
 // ===== عناصر DOM =====
 const videosContainer = document.getElementById('videos_container');
@@ -127,7 +123,16 @@ function filterVideos() {
         currentFilteredVideos = [...allVideos];
     } else {
         currentFilteredVideos = allVideos.filter(v => v.category === selectedCategory);
+    // الكود القديم المسبب للخطأ:
+// myElement.style.display = 'block';
+
+// الكود المعدل الآمن:
+const myElement = document.getElementById('element-id');
+if (myElement) {
+    myElement.style.display = 'block';
+}
     }
+
     renderVideos(true);
 }
 
@@ -195,9 +200,6 @@ function loadWatchPage() {
             if (subsCount) subsCount.innerText = '150K Subscribers';
 
             loadRecommendations(videoId);
-            
-            // تشغيل إعلان عند مشاهدة الفيديو
-            playVideoWithAd(videoId);
         })
         .catch(err => {
             console.error('خطأ في تحميل الفيديو:', err);
@@ -304,7 +306,7 @@ function initParentalControl() {
             if (pinInput.value === DEFAULT_PIN) {
                 localStorage.removeItem('timer_lock_date');
                 localStorage.removeItem('timer_expire_time');
-                if (overlay) overlay.style.display = 'none';
+                overlay.style.display = 'none';
                 pinInput.value = '';
                 alert("تم فتح الموقع بنجاح!");
             } else {
@@ -316,56 +318,9 @@ function initParentalControl() {
     checkDailyLock();
 }
 
-// ===== نظام تشغيل وتجربة الإعلانات =====
-function playVideoWithAd(videoId) {
-    const adModal = document.getElementById('ad-modal-overlay');
-    const skipBtn = document.getElementById('skip-ad-btn');
-    const adContainer = document.getElementById('kidoz-video-ad-container');
-    
-    if (!adModal || !skipBtn) return;
-
-    let countdown = 5;
-    adModal.style.display = 'flex';
-    skipBtn.disabled = true;
-    skipBtn.innerText = `يمكنك التخطي بعد ${countdown} ثوانٍ`;
-
-    if (adContainer) {
-        adContainer.innerHTML = `
-            <div style="text-align: center; padding: 20px;">
-                <h3 style="color: #ff9800; margin-bottom: 10px;">🎮 إعلان للأطفال (Kidoz Ads)</h3>
-                <p>استمتع بأحدث الألعاب والأنشطة الآمنة للأطفال!</p>
-                <small style="color: #888;">Publisher ID: ${KIDOZ_PUBLISHER_ID}</small>
-            </div>
-        `;
-    }
-
-    const timer = setInterval(() => {
-        countdown--;
-        if (countdown > 0) {
-            skipBtn.innerText = `يمكنك التخطي بعد ${countdown} ثوانٍ`;
-        } else {
-            clearInterval(timer);
-            skipBtn.innerText = "تخطي الإعلان ⏭️";
-            skipBtn.disabled = false;
-        }
-    }, 1000);
-
-    skipBtn.onclick = function () {
-        adModal.style.display = 'none';
-        start5MinMidRollTimer();
-    };
-}
-
-function start5MinMidRollTimer() {
-    if (midRollInterval) clearInterval(midRollInterval);
-
-    midRollInterval = setInterval(() => {
-        playVideoWithAd(null);
-    }, 5 * 60 * 1000);
-}
-
-// ===== تشغيل التطبيق =====
+// ===== تشغيل كل شيء عند تحميل الصفحة =====
 document.addEventListener('DOMContentLoaded', () => {
+    // نتحقق إذا كنا في الصفحة الرئيسية
     if (!window.location.pathname.includes('watch.html') && !window.location.pathname.includes('admin.html')) {
         loadVideos();
         setupSearch();
@@ -375,3 +330,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     initParentalControl();
 });
+
+// تصدير الدوال للاستخدام في admin.html إذا لزم الأمر
+// (admin.html له كود خاص به، لكنه يستخدم نفس Firebase)
+// ==========================================
+// Kidoz Ads Integration - Kids YouTube Clone
+// Publisher ID: 15840
+// ==========================================
