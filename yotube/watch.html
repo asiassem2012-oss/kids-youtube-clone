@@ -8,66 +8,19 @@
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     
+    <!-- مكتبة Fluid Player لدعم إعلانات VAST -->
+    <script src="https://cdn.fluidplayer.com/v3/current/fluidplayer.min.js"></script>
+    
     <style>
-        /* تنسيقات حاوية الفيديو والإعلان */
         .video_player_box {
             position: relative;
             width: 100%;
-            padding-top: 56.25%; /* نسبة 16:9 */
             background: #000;
         }
-
-        .video_player_box iframe,
-        .ad_preroll_overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
+        .video_player_box video, .video_player_box iframe {
             width: 100%;
             height: 100%;
             border: none;
-        }
-
-        /* طبقة إعلان الـ Pre-roll */
-        .ad_preroll_overlay {
-            z-index: 10;
-            background: #000;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .ad_skip_btn {
-            position: absolute;
-            bottom: 20px;
-            left: 20px;
-            background: rgba(0, 0, 0, 0.8);
-            color: #fff;
-            border: 1px solid #fff;
-            padding: 8px 16px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: bold;
-            z-index: 11;
-        }
-
-        .ad_skip_btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-
-        .ad_badge {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            background: #fbc02d;
-            color: #000;
-            padding: 4px 8px;
-            font-size: 12px;
-            font-weight: bold;
-            border-radius: 2px;
-            z-index: 11;
         }
     </style>
 </head>
@@ -95,31 +48,15 @@
     <!-- ===== محتوى المشاهدة ===== -->
     <div class="watch_container">
         <div class="main_video">
-            <div class="video_player_box">
-                <!-- طبقة إعلان Pre-roll -->
-                <div id="preroll_ad" class="ad_preroll_overlay">
-                    <span class="ad_badge">إعلان</span>
-                    <a id="ad_click_link" href="#" target="_blank" style="width:100%; height:100%; display:block;">
-                        <video id="ad_video_player" autoplay muted playsinline style="width:100%; height:100%; object-fit:contain;">
-                            <!-- فيديو افتراضي للإعلان -->
-                            <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4" type="video/mp4">
-                        </video>
-                    </a>
-                    <button id="skip_ad_btn" class="ad_skip_btn" disabled>يمكنك التخطي بعد 5</button>
-                </div>
-
-                <!-- مشغل فيديو YouTube الأصلي -->
-                <iframe 
-                    id="main_youtube_iframe"
-                    src="" 
-                    title="YouTube Video Player" 
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                    allowfullscreen>
-                </iframe>
+            <div class="video_player_box" id="player_wrapper">
+                <!-- مشغل فيديو يدعم الـ VAST الإعلاني -->
+                <video id="my_video_player">
+                    <source src="" type="video/mp4"/>
+                </video>
             </div>
 
-            <!-- مكان البنر الإعلاني تحت المشغل -->
-            <div id="watch-ad-zone" style="text-align: center; margin: 15px 0; min-height: 90px;"></div>
+            <!-- مكان الإعلان تحت الفيديو -->
+            <div id="watch-ad-zone" style="text-align: center; margin: 15px 0; min-height: 90px; background: #f9f9f9;"></div>
 
             <h2 class="watch_title">جاري تحميل العنوان...</h2>
             <div class="video_details_bar">
@@ -154,82 +91,26 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
     <script>
-        // رابط VAST الخاص بـ HilltopAds
-        const vastUrl = "https://gloomy-association.com/dOm.FqzYdMGJNSvQZDGAUo/AeCmb9-u/Z/UtlBkLPQTncXz/NWDPke3MMXDxUKtNNIznMA0JOTTHcAw/OgQJ";
+        // تشغيل مشغل Fluid Player مع كود الـ VAST الخاص بك
+        const vastTagUrl = "https://gloomy-association.com/dOm.FqzYdMGJNSvQZDGAUo/AeCmb9-u/Z/UtlBkLPQTncXz/NWDPke3MMXDxUKtNNIznMA0JOTTHcAw/OgQJ";
 
-        const prerollAd = document.getElementById('preroll_ad');
-        const adVideoPlayer = document.getElementById('ad_video_player');
-        const skipAdBtn = document.getElementById('skip_ad_btn');
-        const adClickLink = document.getElementById('ad_click_link');
-        const mainIframe = document.getElementById('main_youtube_iframe');
-
-        // جلب واستخراج رابط الفيديو والصفحة المستهدفة من رابط VAST XML
-        async function fetchVastAd() {
-            try {
-                const response = await fetch(vastUrl);
-                const xmlText = await response.text();
-                const parser = new DOMParser();
-                const xmlDoc = parser.parseFromString(xmlText, "text/xml");
-
-                // استخراج رابط الفيديو MP4 من ملف الـ XML
-                const mediaFiles = xmlDoc.getElementsByTagName("MediaFile");
-                let videoSrc = "";
-                for (let i = 0; i < mediaFiles.length; i++) {
-                    if (mediaFiles[i].getAttribute("type") === "video/mp4") {
-                        videoSrc = mediaFiles[i].textContent.trim();
-                        break;
+        const player = fluidPlayer('my_video_player', {
+            vastOptions: {
+                adList: [
+                    {
+                        roll: 'preRoll', // إعلان قبل بداية الفيديو
+                        vastTag: vastTagUrl,
+                        timer: 5 // إمكانية التخطي بعد 5 ثواني
                     }
-                }
-
-                // استخراج رابط توجيه الضغط (ClickThrough)
-                const clickThrough = xmlDoc.getElementsByTagName("ClickThrough")[0];
-                if (clickThrough) {
-                    adClickLink.href = clickThrough.textContent.trim();
-                } else {
-                    adClickLink.href = vastUrl;
-                }
-
-                if (videoSrc) {
-                    adVideoPlayer.src = videoSrc;
-                    adVideoPlayer.play();
-                }
-            } catch (error) {
-                console.warn("لم يتم تحميل VAST XML، يتم استخدام الإعلان الافتراضي:", error);
+                ]
+            },
+            layoutControls: {
+                autoPlay: true,
+                mute: false
             }
-        }
+        });
 
-        // إدارة مؤقت زر التخطي (5 ثوانٍ)
-        let countdown = 5;
-        const timer = setInterval(() => {
-            countdown--;
-            if (countdown > 0) {
-                skipAdBtn.innerText = `يمكنك التخطي بعد ${countdown}`;
-            } else {
-                clearInterval(timer);
-                skipAdBtn.innerText = "تخطي الإعلان";
-                skipAdBtn.disabled = false;
-            }
-        }, 1000);
-
-        // وظيفة إغلاق الإعلان وتشغيل الفيديو الأصلي
-        function closeAd() {
-            prerollAd.style.display = 'none';
-            adVideoPlayer.pause();
-            
-            // إضافة خاصية autoplay للـ iframe بعد إغلاق الإعلان
-            if (mainIframe.src && !mainIframe.src.includes('autoplay=1')) {
-                const separator = mainIframe.src.includes('?') ? '&' : '?';
-                mainIframe.src += `${separator}autoplay=1`;
-            }
-        }
-
-        skipAdBtn.addEventListener('click', closeAd);
-        adVideoPlayer.addEventListener('ended', closeAd);
-
-        // جلب الإعلان عند تحميل الصفحة
-        window.addEventListener('DOMContentLoaded', fetchVastAd);
-
-        // ===== إعدادات Firebase =====
+        // Firebase Config
         const firebaseConfig = {
             apiKey: "AIzaSyBDIAFYC_cyQJKUPTAbNbFWKaay_iss7ls",
             authDomain: "yotube-clone-72a6d.firebaseapp.com",
@@ -243,16 +124,17 @@
         const auth = firebase.auth();
 
         const loginBtn = document.getElementById('login_btn');
-        loginBtn.addEventListener('click', () => {
-            if (auth.currentUser) {
-                auth.signOut();
-            } else {
-                const provider = new firebase.auth.GoogleAuthProvider();
-                auth.signInWithRedirect(provider);
-            }
-        });
+        if (loginBtn) {
+            loginBtn.addEventListener('click', () => {
+                if (auth.currentUser) {
+                    auth.signOut();
+                } else {
+                    const provider = new firebase.auth.GoogleAuthProvider();
+                    auth.signInWithRedirect(provider);
+                }
+            });
+        }
     </script>
     <script src="script.js"></script>
-  
 </body>
 </html>
