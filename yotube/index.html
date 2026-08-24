@@ -2,6 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
+    <!-- كود تأكيد ملكية HilltopAds -->
     <meta name="bdd1bf25ef631b45eebadaa4779fb07569feda2c" content="bdd1bf25ef631b45eebadaa4779fb07569feda2c" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>YouTube Clone</title>
@@ -30,8 +31,9 @@
         </div>
     </header>
 
-<!-- ضع بنر أعلى الصفحة هنا 👇 -->
-<div id="top-banner-ad" style="text-align: center; margin: 10px auto; min-height: 90px;"></div>
+    <!-- مكان إعلان أعلى الصفحة (HilltopAds / Banners) -->
+    <div id="top-banner-ad" style="text-align: center; margin: 10px auto; min-height: 90px;"></div>
+
     <!-- ===== أزرار التصنيفات ===== -->
     <div class="category_chips">
         <span class="category_chip active" data-category="all">الكل</span>
@@ -41,10 +43,12 @@
         <span class="category_chip" data-category="cartoon">كرتون</span>
     </div>
 
-    <!-- ===== بنر الإعلانات ===== -->
-    <!-- <div id="ad_banner" style="background:#fff3cd; color:#856404; text-align:center; padding:10px; margin:10px 20px; border:1px solid #ffeeba; border-radius:8px;">
+    <!-- ===== بنر الباقة المدفوعة (تم إيقافه تحضيراً للإعلانات) ===== -->
+    <!-- 
+    <div id="ad_banner" style="background:#fff3cd; color:#856404; text-align:center; padding:10px; margin:10px 20px; border:1px solid #ffeeba; border-radius:8px;">
         📢 إعلان: اشترك في الباقة المدفوعة ($5/شهرياً) لإخفاء الإعلانات والحصول على تجربة آمنة تماماً للأطفال!
-    </div> -->
+    </div> 
+    -->
 
     <!-- ===== شبكة الفيديوهات ===== -->
     <div class="videos_grid" id="videos_container">
@@ -87,7 +91,11 @@
         // تسجيل الدخول والخروج
         const loginBtn = document.getElementById('login_btn');
         const userStatus = document.getElementById('user_status');
-        const adBanner = document.getElementById('ad_banner');
+        
+        /* 
+        // عنصر بنر الباقة المدفوعة متوقف حالياً
+        const adBanner = document.getElementById('ad_banner'); 
+        */
 
         loginBtn.addEventListener('click', () => {
             if (auth.currentUser) {
@@ -101,15 +109,18 @@
         auth.onAuthStateChanged(async (user) => {
             if (user) {
                 loginBtn.innerText = "تسجيل الخروج";
+                
+                /*
+                // منطق إخفاء الإعلانات للباقة المدفوعة Pro (موقوف حالياً)
                 const userDoc = await db.collection('users').doc(user.uid).get();
                 if (userDoc.exists && userDoc.data().isPro) {
-                    adBanner.style.display = 'none';
+                    if (adBanner) adBanner.style.display = 'none';
                     userStatus.style.display = 'inline-block';
                     userStatus.style.background = '#d4edda';
                     userStatus.style.color = '#155724';
                     userStatus.innerText = 'حساب مميز ⭐ Pro';
                 } else {
-                    adBanner.style.display = 'block';
+                    if (adBanner) adBanner.style.display = 'block';
                     userStatus.style.display = 'inline-block';
                     userStatus.style.background = '#e2e3e5';
                     userStatus.style.color = '#383d41';
@@ -122,22 +133,16 @@
                         });
                     }
                 }
+                */
             } else {
                 loginBtn.innerText = "تسجيل الدخول";
                 userStatus.style.display = 'none';
-                adBanner.style.display = 'block';
+                /* if (adBanner) adBanner.style.display = 'block'; */
             }
         });
     </script>
-   
 
-<!-- ربط ملف الـ JavaScript -->
-<script src="script.js"></script>
-</body>
-</html>
-
-
+    <!-- ربط ملف الـ JavaScript الرئيسي -->
     <script src="script.js"></script>
-    
 </body>
 </html>
