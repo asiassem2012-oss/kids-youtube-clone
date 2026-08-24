@@ -253,44 +253,6 @@
         });
     </script>
     <script src="script.js"></script>
-    // جلب واستخراج رابط الفيديو والصفحة المستهدفة من رابط VAST XML
-async function fetchVastAd() {
-    try {
-        // إضافة وقت محدد (Timeout) حتى لا تعطل الصفحة لو تأخر الإعلان
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 ثوانٍ كحد أقصى
-
-        const response = await fetch(vastUrl, { signal: controller.signal });
-        const xmlText = await response.text();
-        clearTimeout(timeoutId);
-
-        const parser = new DOMParser();
-        const xmlDoc = parser.parseFromString(xmlText, "text/xml");
-
-        const mediaFiles = xmlDoc.getElementsByTagName("MediaFile");
-        let videoSrc = "";
-        for (let i = 0; i < mediaFiles.length; i++) {
-            if (mediaFiles[i].getAttribute("type") === "video/mp4") {
-                videoSrc = mediaFiles[i].textContent.trim();
-                break;
-            }
-        }
-
-        const clickThrough = xmlDoc.getElementsByTagName("ClickThrough")[0];
-        if (clickThrough) {
-            adClickLink.href = clickThrough.textContent.trim();
-        }
-
-        if (videoSrc) {
-            adVideoPlayer.src = videoSrc;
-            adVideoPlayer.play().catch(() => {});
-        } else {
-            closeAd(); // لو مفيش إعلان متوفر يتخطى فوراً
-        }
-    } catch (error) {
-        console.warn("تعذر تحميل الإعلان، فتح الفيديو مباشرة:", error);
-        closeAd(); // في حالة حدوث أي خطأ يتم إغلاق الإعلان فوراً وعرض الفيديو الأصلي
-    }
-}
+  
 </body>
 </html>
