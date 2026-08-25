@@ -2,72 +2,10 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="bdd1bf25ef631b45eebadaa4779fb07569feda2c" content="bdd1bf25ef631b45eebadaa4779fb07569feda2c" /> 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>مشاهدة الفيديو - YouTube Clone</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    
-    <style>
-        .video_player_box {
-            position: relative;
-            width: 100%;
-            padding-top: 56.25%; /* نسبة 16:9 */
-            background: #000;
-        }
-
-        .video_player_box iframe,
-        #ad_overlay_container {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            border: none;
-        }
-
-        /* حاوية الإعلان المستقلة */
-        #ad_overlay_container {
-            z-index: 99;
-            background: #000;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .ad_skip_button {
-            position: absolute;
-            bottom: 20px;
-            left: 20px;
-            background: rgba(0, 0, 0, 0.85);
-            color: #fff;
-            border: 1px solid #fff;
-            padding: 8px 16px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: bold;
-            z-index: 100;
-        }
-
-        .ad_skip_button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        .ad_tag_badge {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            background: #fbc02d;
-            color: #000;
-            padding: 4px 8px;
-            font-size: 12px;
-            font-weight: bold;
-            border-radius: 2px;
-            z-index: 100;
-        }
-    </style>
 </head>
 <body>
     <!-- ===== شريط التنقل ===== -->
@@ -94,30 +32,14 @@
     <div class="watch_container">
         <div class="main_video">
             <div class="video_player_box">
-                <!-- طبقة الإعلان Pre-roll (واحدة فقط) -->
-                <div id="ad_overlay_container">
-                    <span class="ad_tag_badge">إعلان</span>
-                    <a id="ad_link" href="#" target="_blank" style="width:100%; height:100%; display:block;">
-                        <video id="single_ad_player" autoplay muted playsinline style="width:100%; height:100%; object-fit:contain;">
-                            <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4" type="video/mp4">
-                        </video>
-                    </a>
-                    <button id="skip_btn" class="ad_skip_button" disabled>تخطي بعد 5</button>
-                </div>
-
-                <!-- مشغل فيديو YouTube الرئيسي -->
                 <iframe 
-                    id="main_youtube_iframe"
                     src="" 
                     title="YouTube Video Player" 
+                    frameborder="0" 
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
                     allowfullscreen>
                 </iframe>
             </div>
-
-            <!-- مكان البنر الإعلاني -->
-            <div id="watch-ad-zone" style="text-align: center; margin: 15px 0; min-height: 90px;"></div>
-
             <h2 class="watch_title">جاري تحميل العنوان...</h2>
             <div class="video_details_bar">
                 <div class="channel_info">
@@ -141,7 +63,20 @@
         </div>
 
         <div class="recommended_videos" id="recommended_container">
-            <!-- سيتم التحميل من script.js -->
+            <!-- سيتم تحميلها بواسطة JavaScript -->
+        </div>
+    </div>
+
+    <!-- ===== شاشة القفل ===== -->
+    <div id="parent_overlay" class="parent_overlay" style="display: none;">
+        <div class="overlay_card">
+            <i class="material-icons">lock</i>
+            <h2>انتهى وقت المشاهدة المسموح به اليوم!</h2>
+            <p>يرجى العودة غداً أو طلب إذن ولي الأمر للفتح.</p>
+            <div class="pin_box">
+                <input type="password" id="parent_pin_input" placeholder="أدخل رمز PIN">
+                <button id="unlock_btn">إلغاء القفل</button>
+            </div>
         </div>
     </div>
 
@@ -149,74 +84,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
-
     <script>
-        const vastTagUrl = "https://gloomy-association.com/dOm.FqzYdMGJNSvQZDGAUo/AeCmb9-u/Z/UtlBkLPQTncXz/NWDPke3MMXDxUKtNNIznMA0JOTTHcAw/OgQJ";
-        
-        const adContainer = document.getElementById('ad_overlay_container');
-        const adVideo = document.getElementById('single_ad_player');
-        const skipBtn = document.getElementById('skip_btn');
-        const adLink = document.getElementById('ad_link');
-        let isAdClosed = false;
-
-        // إغلاق الإعلان وتدمير المشغل بتاعه تماماً لمنع أي تكرار
-        function destroyAdAndPlayVideo() {
-            if (isAdClosed) return;
-            isAdClosed = true;
-
-            adVideo.pause();
-            adContainer.remove(); // مسح عنصر الإعلان تماماً من الـ DOM
-
-            // تشغيل فيديو يوتيوب الأساسي
-            const mainIframe = document.getElementById('main_youtube_iframe');
-            if (mainIframe && mainIframe.src) {
-                if (!mainIframe.src.includes('autoplay=1')) {
-                    const sep = mainIframe.src.includes('?') ? '&' : '?';
-                    mainIframe.src += `${sep}autoplay=1`;
-                }
-            }
-        }
-
-        // جلب رابط الإعلان من الـ VAST
-        async function loadVastAd() {
-            try {
-                const res = await fetch(vastTagUrl);
-                const xmlText = await res.text();
-                const xml = new DOMParser().parseFromString(xmlText, "text/xml");
-
-                const media = xml.getElementsByTagName("MediaFile")[0];
-                const click = xml.getElementsByTagName("ClickThrough")[0];
-
-                if (click) adLink.href = click.textContent.trim();
-                if (media) {
-                    adVideo.src = media.textContent.trim();
-                    adVideo.play().catch(() => {});
-                }
-            } catch (e) {
-                console.warn("خطأ في جلب VAST:", e);
-            }
-        }
-
-        // عداد التخطي 5 ثواني
-        let secondsLeft = 5;
-        const adTimer = setInterval(() => {
-            secondsLeft--;
-            if (secondsLeft > 0) {
-                skipBtn.innerText = `تخطي بعد ${secondsLeft}`;
-            } else {
-                clearInterval(adTimer);
-                skipBtn.innerText = "تخطي الإعلان";
-                skipBtn.disabled = false;
-            }
-        }, 1000);
-
-        skipBtn.addEventListener('click', destroyAdAndPlayVideo);
-        adVideo.addEventListener('ended', destroyAdAndPlayVideo);
-
-        // بدء الإعلان فور تحميل الصفحة
-        window.addEventListener('load', loadVastAd);
-
-        // Firebase Config
         const firebaseConfig = {
             apiKey: "AIzaSyBDIAFYC_cyQJKUPTAbNbFWKaay_iss7ls",
             authDomain: "yotube-clone-72a6d.firebaseapp.com",
@@ -228,19 +96,92 @@
         };
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
-
-        const loginBtn = document.getElementById('login_btn');
-        if (loginBtn) {
-            loginBtn.addEventListener('click', () => {
-                if (auth.currentUser) {
-                    auth.signOut();
-                } else {
-                    const provider = new firebase.auth.GoogleAuthProvider();
-                    auth.signInWithRedirect(provider);
-                }
-            });
-        }
+        const db = firebase.firestore();
     </script>
+    <script>
+    // إعدادات Firebase
+    const firebaseConfig = {
+        apiKey: "AIzaSyBDIAFYC_cyQJKUPTAbNbFWKaay_iss7ls",
+        authDomain: "yotube-clone-72a6d.firebaseapp.com",
+        projectId: "yotube-clone-72a6d",
+        storageBucket: "yotube-clone-72a6d.firebasestorage.app",
+        messagingSenderId: "237883115992",
+        appId: "1:237883115992:web:2aef12d44925a8dd470aad",
+        measurementId: "G-06GW1D9DQV"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    // ===== تسجيل الدخول باستخدام Redirect =====
+    const loginBtn = document.getElementById('login_btn');
+    const userStatus = document.getElementById('user_status');
+    const adBanner = document.getElementById('ad_banner');
+
+    async function updateUserUI(user) {
+        if (user) {
+            loginBtn.innerText = "تسجيل الخروج";
+            try {
+                const doc = await db.collection('users').doc(user.uid).get();
+                if (doc.exists && doc.data().isPro) {
+                    adBanner.style.display = 'none';
+                    userStatus.style.display = 'inline-block';
+                    userStatus.style.background = '#d4edda';
+                    userStatus.style.color = '#155724';
+                    userStatus.innerText = 'حساب مميز ⭐ Pro';
+                } else {
+                    adBanner.style.display = 'block';
+                    userStatus.style.display = 'inline-block';
+                    userStatus.style.background = '#e2e3e5';
+                    userStatus.style.color = '#383d41';
+                    userStatus.innerText = 'حساب مجاني';
+                    if (!doc.exists) {
+                        await db.collection('users').doc(user.uid).set({
+                            name: user.displayName,
+                            email: user.email,
+                            isPro: false
+                        });
+                    }
+                }
+            } catch (err) {
+                console.warn(err);
+            }
+        } else {
+            loginBtn.innerText = "تسجيل الدخول";
+            userStatus.style.display = 'none';
+            adBanner.style.display = 'block';
+        }
+    }
+
+    // معالجة نتيجة Redirect
+    auth.getRedirectResult()
+        .then((result) => {
+            if (result.user) {
+                console.log('✅ تم تسجيل الدخول:', result.user.displayName);
+            }
+        })
+        .catch((error) => {
+            console.error('❌ خطأ في تسجيل الدخول:', error.message);
+            if (error.code === 'auth/unauthorized-domain') {
+                alert('⚠️ هذا النطاق غير مسموح به. تأكد من إضافة localhost إلى Authorized Domains في Firebase Console.');
+            } else {
+                alert('فشل تسجيل الدخول: ' + error.message);
+            }
+        });
+
+    loginBtn.addEventListener('click', () => {
+        if (auth.currentUser) {
+            auth.signOut();
+        } else {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            auth.signInWithRedirect(provider);
+        }
+    });
+
+    auth.onAuthStateChanged(async (user) => {
+        await updateUserUI(user);
+    });
+</script>
     <script src="script.js"></script>
 </body>
 </html>
