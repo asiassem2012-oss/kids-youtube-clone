@@ -1,11 +1,16 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>مشاهدة الفيديو - YouTube Clone</title>
-    <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="style.css" />
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+
+    <!-- ===== مشغل الفيديو Video.js مع إضافة VAST ===== -->
+    <link href="https://vjs.zencdn.net/7.20.3/video-js.css" rel="stylesheet" />
+    <script src="https://vjs.zencdn.net/7.20.3/video.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/videojs-vast-plugin@1.9.0/dist/videojs-vast.min.js"></script>
 </head>
 <body>
     <!-- ===== شريط التنقل ===== -->
@@ -15,7 +20,7 @@
             <div class="logo">YouTube <span>Clone</span></div>
         </div>
         <div class="header-center">
-            <input type="text" id="search_input" placeholder="بحث...">
+            <input type="text" id="search_input" placeholder="بحث..." />
             <button><i class="material-icons">search</i></button>
         </div>
         <div class="header-right">
@@ -24,37 +29,27 @@
             <i class="material-icons" id="parent_btn" title="الرقابة الأبوية">timer</i>
             <i class="material-icons">video_call</i>
             <i class="material-icons">notifications</i>
-            <img src="images/profile.jpg" alt="profile" class="header-avatar">
+            <img src="images/profile.jpg" alt="profile" class="header-avatar" />
         </div>
     </header>
 
     <!-- ===== محتوى المشاهدة ===== -->
     <div class="watch_container">
         <div class="main_video">
-            
-            <!-- ===== إعلان ما قبل الفيديو (اللي طلبته) ===== -->
-            <div class="pre-video-ad" style="background:#1a1a1a; border:1px solid #333; border-radius:12px; padding:12px 20px; margin-bottom:16px; text-align:center;">
-                <span style="color:#aaa; display:block; font-size:12px; margin-bottom:6px;">📢 إعلان</span>
-                <a href="https://gloomy-association.com/d/mnF_z.doG-NnveZ/GvUx/qeXmf9ZuQZIUkl/k/PSTacbz/NuDhkH3SM/D/U/tBNEzcM_0EO/TBc/w/OrQR" target="_blank" style="color:#fff; font-weight:bold; font-size:16px; text-decoration:none; display:inline-block; padding:8px 20px; background:#065fd4; border-radius:30px; transition:background 0.2s;">
-                    🎬 اضغط هنا لمشاهدة الإعلان والمتابعة
-                </a>
+
+            <!-- ===== مشغل الفيديو الجديد (يدعم VAST) ===== -->
+            <div class="video_player_box">
+                <video-js id="my-video" class="vjs-default-skin vjs-big-play-centered"
+                    controls preload="auto" width="100%" height="auto">
+                    <!-- مصدر الفيديو (سيتغير بواسطة JavaScript) -->
+                    <source id="videoSource" src="" type="video/mp4" />
+                </video-js>
             </div>
 
-            <!-- مشغل الفيديو -->
-            <div class="video_player_box">
-                <iframe id="videoIframe"
-                    src="" 
-                    title="YouTube Video Player" 
-                    frameborder="0" 
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                    allowfullscreen>
-                </iframe>
-            </div>
-            
             <h2 class="watch_title" id="watchTitle">جاري تحميل العنوان...</h2>
             <div class="video_details_bar">
                 <div class="channel_info">
-                    <img src="images/profile.jpg" alt="Channel" id="channel_pic">
+                    <img src="images/profile.jpg" alt="Channel" id="channel_pic" />
                     <div>
                         <h3 id="channel_name">Assem Code</h3>
                         <span id="subscribers_count">150K Subscribers</span>
@@ -85,7 +80,7 @@
             <h2>انتهى وقت المشاهدة المسموح به اليوم!</h2>
             <p>يرجى العودة غداً أو طلب إذن ولي الأمر للفتح.</p>
             <div class="pin_box">
-                <input type="password" id="parent_pin_input" placeholder="أدخل رمز PIN">
+                <input type="password" id="parent_pin_input" placeholder="أدخل رمز PIN" />
                 <button id="unlock_btn">إلغاء القفل</button>
             </div>
         </div>
@@ -111,7 +106,7 @@
         const auth = firebase.auth();
         const db = firebase.firestore();
 
-        // ===== دوال تسجيل الدخول =====
+        // ===== تسجيل الدخول =====
         const loginBtn = document.getElementById('login_btn');
         const userStatus = document.getElementById('user_status');
 
@@ -175,10 +170,33 @@
                     document.title = `${video.title} - YouTube Clone`;
                     document.getElementById('watchTitle').innerText = video.title;
 
-                    const iframe = document.getElementById('videoIframe');
-                    if (iframe && video.youtubeId) {
-                        iframe.src = `https://www.youtube.com/embed/${video.youtubeId}?autoplay=1&enablejsapi=1`;
-                    }
+                    // ===== تحديث مشغل الفيديو =====
+                    const videoSource = document.getElementById('videoSource');
+                    // استخدم رابط الفيديو من قاعدة البيانات إذا كان موجوداً، وإلا استخدم رابط تجريبي
+                    const videoUrl = video.mp4Url || "https://www.w3schools.com/html/mov_bbb.mp4";
+                    videoSource.src = videoUrl;
+
+                    // ===== تهيئة مشغل Video.js مع رابط VAST الخاص بك =====
+                    const player = videojs('my-video', {
+                        controls: true,
+                        autoplay: false,
+                        preload: 'auto'
+                    });
+
+                    // رابط VAST الذي حصلت عليه من HilltopAds
+                    const vastUrl = "https://gloomy-association.com/dOm-F.zzdUGfNRvCZgGJUF/sejm/9SupZaUYlskMPQT-cJzyNUDOkj3jMuD_UutqNdzvMz0TO/TccCwiOkQU";
+
+                    // تفعيل إضافة VAST
+                    player.vast({
+                        url: vastUrl,
+                        playAdAlways: true,    // يعرض الإعلان في كل مرة
+                        adCancelable: false    // لا يسمح بإلغاء الإعلان (اختياري)
+                    });
+
+                    // ===== بدء تشغيل الفيديو بعد تحميل الإعلان =====
+                    player.ready(function() {
+                        player.play();
+                    });
 
                     // تحديث معلومات القناة
                     document.getElementById('channel_pic').src = video.profilePic || 'images/profile.jpg';
@@ -188,11 +206,12 @@
                     loadRecommendations(videoId);
                 })
                 .catch(err => {
-                    console.error('خطأ:', err);
+                    console.error('خطأ في تحميل الفيديو:', err);
                     document.getElementById('watchTitle').innerText = 'حدث خطأ في التحميل';
                 });
         }
 
+        // ===== تحميل المقترحات =====
         function loadRecommendations(currentId) {
             const recContainer = document.getElementById('recommended_container');
             if (!recContainer) return;
@@ -224,22 +243,8 @@
                 });
         }
 
-        // تشغيل دالة التحميل عند فتح الصفحة
+        // ===== تشغيل التحميل عند فتح الصفحة =====
         document.addEventListener('DOMContentLoaded', loadWatchPage);
-    </script>
-
-    <!-- ===== كود الإعلان (بنر) المطلوب ===== -->
-    <script>
-    (function(tw){
-        var d = document,
-            s = d.createElement('script'),
-            l = d.scripts[d.scripts.length - 1];
-        s.settings = tw || {};
-        s.src = "\/\/gloomy-association.com\/c.Ds9z6DbW2-5QljS\/WJQv9hNqzmM\/1jMuThg\/3CNByy0\/3-MfzbUXxzOMD\/gbx_";
-        s.async = true;
-        s.referrerPolicy = 'no-referrer-when-downgrade';
-        l.parentNode.insertBefore(s, l);
-    })({})
     </script>
 
 </body>
