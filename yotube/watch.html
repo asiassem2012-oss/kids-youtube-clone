@@ -6,14 +6,9 @@
     <title>مشاهدة الفيديو - YouTube Clone</title>
     <link rel="stylesheet" href="style.css" />
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
-
-    <!-- مشغل الفيديو Video.js مع دعم VAST -->
-    <link href="https://vjs.zencdn.net/7.20.3/video-js.css" rel="stylesheet" />
-    <script src="https://vjs.zencdn.net/7.20.3/video.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/videojs-vast-plugin@1.9.0/dist/videojs-vast.min.js"></script>
 </head>
 <body>
-    <!-- شريط التنقل (نفس الموجود في index) -->
+    <!-- ===== شريط التنقل ===== -->
     <header class="header">
         <div class="header-left">
             <i class="material-icons" onclick="window.location.href='index.html'">arrow_back</i>
@@ -33,17 +28,29 @@
         </div>
     </header>
 
-    <!-- محتوى المشاهدة -->
+    <!-- ===== محتوى المشاهدة ===== -->
     <div class="watch_container">
         <div class="main_video">
-            <!-- مشغل الفيديو الجديد -->
-            <div class="video_player_box">
-                <video-js id="my-video" class="vjs-default-skin vjs-big-play-centered"
-                    controls preload="auto" width="100%" height="auto">
-                    <source id="videoSource" src="" type="video/mp4" />
-                </video-js>
+
+            <!-- ===== إعلان فيديو (كبنر فوق المشغل) ===== -->
+            <div id="adContainer" style="background:#1a1a1a; border:1px solid #333; border-radius:12px; padding:12px 20px; margin-bottom:16px; text-align:center; display:block;">
+                <span style="color:#aaa; display:block; font-size:12px; margin-bottom:6px;">📢 إعلان</span>
+                <a id="adLink" href="https://gloomy-association.com/dOm-F.zzdUGfNRvCZgGJUF/sejm/9SupZaUYlskMPQT-cJzyNUDOkj3jMuD_UutqNdzvMz0TO/TccCwiOkQU" target="_blank" style="color:#fff; font-weight:bold; font-size:16px; text-decoration:none; display:inline-block; padding:8px 20px; background:#065fd4; border-radius:30px; transition:background 0.2s;">
+                    🎬 اضغط هنا لمشاهدة الإعلان والمتابعة
+                </a>
             </div>
 
+            <!-- ===== مشغل YouTube ===== -->
+            <div class="video_player_box">
+                <iframe id="videoIframe"
+                    src="" 
+                    title="YouTube Video Player" 
+                    frameborder="0" 
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                    allowfullscreen>
+                </iframe>
+            </div>
+            
             <h2 class="watch_title" id="watchTitle">جاري تحميل العنوان...</h2>
             <div class="video_details_bar">
                 <div class="channel_info">
@@ -67,11 +74,11 @@
         </div>
 
         <div class="recommended_videos" id="recommended_container">
-            <!-- سيتم تحميلها بواسطة JavaScript -->
+            <!-- ستتحمّل بواسطة JavaScript -->
         </div>
     </div>
 
-    <!-- شاشة القفل الأبوي -->
+    <!-- ===== شاشة القفل ===== -->
     <div id="parent_overlay" class="parent_overlay" style="display: none;">
         <div class="overlay_card">
             <i class="material-icons">lock</i>
@@ -84,12 +91,13 @@
         </div>
     </div>
 
-    <!-- Firebase -->
+    <!-- ===== Firebase ===== -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
     <script>
-        // إعدادات Firebase
+        // ===== إعدادات Firebase =====
         const firebaseConfig = {
             apiKey: "AIzaSyBDIAFYC_cyQJKUPTAbNbFWKaay_iss7ls",
             authDomain: "yotube-clone-72a6d.firebaseapp.com",
@@ -103,7 +111,7 @@
         const auth = firebase.auth();
         const db = firebase.firestore();
 
-        // تسجيل الدخول
+        // ===== تسجيل الدخول =====
         const loginBtn = document.getElementById('login_btn');
         const userStatus = document.getElementById('user_status');
 
@@ -117,11 +125,17 @@
                         userStatus.style.background = '#d4edda';
                         userStatus.style.color = '#155724';
                         userStatus.innerText = 'حساب مميز ⭐ Pro';
+                        // إخفاء الإعلان للمستخدم المميز
+                        const adContainer = document.getElementById('adContainer');
+                        if (adContainer) adContainer.style.display = 'none';
                     } else {
                         userStatus.style.display = 'inline-block';
                         userStatus.style.background = '#e2e3e5';
                         userStatus.style.color = '#383d41';
                         userStatus.innerText = 'حساب مجاني';
+                        // إظهار الإعلان للمستخدم المجاني
+                        const adContainer = document.getElementById('adContainer');
+                        if (adContainer) adContainer.style.display = 'block';
                         if (!doc.exists) {
                             await db.collection('users').doc(user.uid).set({
                                 name: user.displayName,
@@ -134,6 +148,8 @@
             } else {
                 loginBtn.innerText = "تسجيل الدخول";
                 userStatus.style.display = 'none';
+                const adContainer = document.getElementById('adContainer');
+                if (adContainer) adContainer.style.display = 'block';
             }
         }
 
@@ -148,57 +164,32 @@
 
         auth.onAuthStateChanged((user) => { updateUI(user); });
 
-        // ===== دالة تحميل الفيديو =====
+        // ===== تحميل الفيديو من Firestore (YouTube) =====
         function loadWatchPage() {
             const urlParams = new URLSearchParams(window.location.search);
             const videoId = urlParams.get('id');
-            const titleEl = document.getElementById('watchTitle');
-            const iframe = document.querySelector('.video_player_box iframe');
-            const videoSource = document.getElementById('videoSource');
-            const player = videojs('my-video', {
-                controls: true,
-                autoplay: false,
-                preload: 'auto'
-            });
-
             if (!videoId) {
-                titleEl.innerText = 'معرف الفيديو غير موجود';
+                document.getElementById('watchTitle').innerText = 'معرف الفيديو غير موجود';
                 return;
             }
 
             db.collection('videos').doc(videoId).get()
                 .then(doc => {
                     if (!doc.exists) {
-                        titleEl.innerText = 'الفيديو غير موجود';
+                        document.getElementById('watchTitle').innerText = 'الفيديو غير موجود';
                         return;
                     }
                     const video = { id: doc.id, ...doc.data() };
                     document.title = `${video.title} - YouTube Clone`;
-                    titleEl.innerText = video.title;
+                    document.getElementById('watchTitle').innerText = video.title;
 
-                    // تعيين مصدر الفيديو
-                    const videoUrl = video.mp4Url || '';
-                    if (videoUrl) {
-                        videoSource.src = videoUrl;
-                        player.src({ src: videoUrl, type: 'video/mp4' });
-                    } else {
-                        titleEl.innerText = 'رابط الفيديو غير متوفر';
-                        return;
+                    // ===== تشغيل YouTube =====
+                    const iframe = document.getElementById('videoIframe');
+                    if (iframe && video.youtubeId) {
+                        iframe.src = `https://www.youtube.com/embed/${video.youtubeId}?autoplay=1&enablejsapi=1`;
                     }
 
-                    // تفعيل VAST
-                    const vastUrl = "https://gloomy-association.com/dOm-F.zzdUGfNRvCZgGJUF/sejm/9SupZaUYlskMPQT-cJzyNUDOkj3jMuD_UutqNdzvMz0TO/TccCwiOkQU";
-                    player.vast({
-                        url: vastUrl,
-                        playAdAlways: true,
-                        adCancelable: false
-                    });
-
-                    player.ready(function() {
-                        player.play();
-                    });
-
-                    // معلومات القناة
+                    // تحديث معلومات القناة
                     document.getElementById('channel_pic').src = video.profilePic || 'images/profile.jpg';
                     document.getElementById('channel_name').innerText = video.creator || 'Assem Code';
 
@@ -207,10 +198,11 @@
                 })
                 .catch(err => {
                     console.error('خطأ في تحميل الفيديو:', err);
-                    titleEl.innerText = 'حدث خطأ في التحميل';
+                    document.getElementById('watchTitle').innerText = 'حدث خطأ في التحميل';
                 });
         }
 
+        // ===== تحميل المقترحات =====
         function loadRecommendations(currentId) {
             const recContainer = document.getElementById('recommended_container');
             if (!recContainer) return;
@@ -244,5 +236,20 @@
 
         document.addEventListener('DOMContentLoaded', loadWatchPage);
     </script>
+
+    <!-- ===== كود الإعلان البرمجي (بنر) ===== -->
+    <script>
+    (function(tw){
+        var d = document,
+            s = d.createElement('script'),
+            l = d.scripts[d.scripts.length - 1];
+        s.settings = tw || {};
+        s.src = "\/\/gloomy-association.com\/c.Ds9z6DbW2-5QljS\/WJQv9hNqzmM\/1jMuThg\/3CNByy0\/3-MfzbUXxzOMD\/gbx_";
+        s.async = true;
+        s.referrerPolicy = 'no-referrer-when-downgrade';
+        l.parentNode.insertBefore(s, l);
+    })({})
+    </script>
+
 </body>
 </html>
