@@ -6,39 +6,6 @@
     <title>مشاهدة الفيديو - YouTube Clone</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <style>
-        /* تنسيق خاص لإعلان ما قبل الفيديو */
-        .pre-video-ad {
-            background: #1a1a1a;
-            border: 1px solid #333;
-            border-radius: 12px;
-            padding: 12px 20px;
-            margin-bottom: 16px;
-            text-align: center;
-            direction: ltr; /* لأن الرابط إنجليزي */
-        }
-        .pre-video-ad a {
-            color: #3ea6ff;
-            font-weight: bold;
-            font-size: 16px;
-            text-decoration: none;
-            display: inline-block;
-            padding: 8px 20px;
-            background: #065fd4;
-            color: #fff;
-            border-radius: 30px;
-            transition: background 0.2s;
-        }
-        .pre-video-ad a:hover {
-            background: #004d99;
-        }
-        .pre-video-ad span {
-            color: #aaa;
-            display: block;
-            font-size: 12px;
-            margin-bottom: 6px;
-        }
-    </style>
 </head>
 <body>
     <!-- ===== شريط التنقل ===== -->
@@ -65,17 +32,17 @@
     <div class="watch_container">
         <div class="main_video">
             
-            <!-- ===== 🎬 إعلان ما قبل الفيديو (الرابط المطلوب) ===== -->
-            <div class="pre-video-ad">
-                <span>📢 إعلان</span>
-                <a href="https://gloomy-association.com/d/mnF_z.doG-NnveZ/GvUx/qeXmf9ZuQZIUkl/k/PSTacbz/NuDhkH3SM/D/U/tBNEzcM_0EO/TBc/w/OrQR" target="_blank">
+            <!-- ===== إعلان ما قبل الفيديو (اللي طلبته) ===== -->
+            <div class="pre-video-ad" style="background:#1a1a1a; border:1px solid #333; border-radius:12px; padding:12px 20px; margin-bottom:16px; text-align:center;">
+                <span style="color:#aaa; display:block; font-size:12px; margin-bottom:6px;">📢 إعلان</span>
+                <a href="https://gloomy-association.com/d/mnF_z.doG-NnveZ/GvUx/qeXmf9ZuQZIUkl/k/PSTacbz/NuDhkH3SM/D/U/tBNEzcM_0EO/TBc/w/OrQR" target="_blank" style="color:#fff; font-weight:bold; font-size:16px; text-decoration:none; display:inline-block; padding:8px 20px; background:#065fd4; border-radius:30px; transition:background 0.2s;">
                     🎬 اضغط هنا لمشاهدة الإعلان والمتابعة
                 </a>
             </div>
 
             <!-- مشغل الفيديو -->
             <div class="video_player_box">
-                <iframe 
+                <iframe id="videoIframe"
                     src="" 
                     title="YouTube Video Player" 
                     frameborder="0" 
@@ -84,7 +51,7 @@
                 </iframe>
             </div>
             
-            <h2 class="watch_title">جاري تحميل العنوان...</h2>
+            <h2 class="watch_title" id="watchTitle">جاري تحميل العنوان...</h2>
             <div class="video_details_bar">
                 <div class="channel_info">
                     <img src="images/profile.jpg" alt="Channel" id="channel_pic">
@@ -107,7 +74,7 @@
         </div>
 
         <div class="recommended_videos" id="recommended_container">
-            <!-- سيتم تحميلها بواسطة JavaScript -->
+            <!-- ستتحمّل بواسطة JavaScript -->
         </div>
     </div>
 
@@ -130,6 +97,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
     <script>
+        // ===== إعدادات Firebase =====
         const firebaseConfig = {
             apiKey: "AIzaSyBDIAFYC_cyQJKUPTAbNbFWKaay_iss7ls",
             authDomain: "yotube-clone-72a6d.firebaseapp.com",
@@ -143,7 +111,7 @@
         const auth = firebase.auth();
         const db = firebase.firestore();
 
-        // ===== تسجيل الدخول (نسخة مبسطة لـ watch) =====
+        // ===== دوال تسجيل الدخول =====
         const loginBtn = document.getElementById('login_btn');
         const userStatus = document.getElementById('user_status');
 
@@ -187,11 +155,80 @@
         });
 
         auth.onAuthStateChanged((user) => { updateUI(user); });
+
+        // ===== تحميل الفيديو =====
+        function loadWatchPage() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const videoId = urlParams.get('id');
+            if (!videoId) {
+                document.getElementById('watchTitle').innerText = 'معرف الفيديو غير موجود';
+                return;
+            }
+
+            db.collection('videos').doc(videoId).get()
+                .then(doc => {
+                    if (!doc.exists) {
+                        document.getElementById('watchTitle').innerText = 'الفيديو غير موجود';
+                        return;
+                    }
+                    const video = { id: doc.id, ...doc.data() };
+                    document.title = `${video.title} - YouTube Clone`;
+                    document.getElementById('watchTitle').innerText = video.title;
+
+                    const iframe = document.getElementById('videoIframe');
+                    if (iframe && video.youtubeId) {
+                        iframe.src = `https://www.youtube.com/embed/${video.youtubeId}?autoplay=1&enablejsapi=1`;
+                    }
+
+                    // تحديث معلومات القناة
+                    document.getElementById('channel_pic').src = video.profilePic || 'images/profile.jpg';
+                    document.getElementById('channel_name').innerText = video.creator || 'Assem Code';
+
+                    // تحميل المقترحات
+                    loadRecommendations(videoId);
+                })
+                .catch(err => {
+                    console.error('خطأ:', err);
+                    document.getElementById('watchTitle').innerText = 'حدث خطأ في التحميل';
+                });
+        }
+
+        function loadRecommendations(currentId) {
+            const recContainer = document.getElementById('recommended_container');
+            if (!recContainer) return;
+
+            db.collection('videos').limit(20).get()
+                .then(snapshot => {
+                    let html = '';
+                    snapshot.forEach(doc => {
+                        const v = { id: doc.id, ...doc.data() };
+                        if (v.id === currentId) return;
+                        const thumb = v.thumbnail || `https://img.youtube.com/vi/${v.youtubeId}/hqdefault.jpg`;
+                        html += `
+                            <div class="side_video">
+                                <a href="watch.html?id=${v.id}">
+                                    <img src="${thumb}" alt="${v.title}">
+                                </a>
+                                <div class="side_video_info">
+                                    <a href="watch.html?id=${v.id}">${v.title}</a>
+                                    <p>${v.creator || 'غير معروف'}</p>
+                                    <span>${v.views || '0 views'}</span>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    recContainer.innerHTML = html || '<p style="color:var(--text-secondary);">لا توجد مقترحات</p>';
+                })
+                .catch(() => {
+                    recContainer.innerHTML = '<p style="color:var(--text-secondary);">حدث خطأ في تحميل المقترحات</p>';
+                });
+        }
+
+        // تشغيل دالة التحميل عند فتح الصفحة
+        document.addEventListener('DOMContentLoaded', loadWatchPage);
     </script>
 
-    <script src="script.js"></script>
-
-    <!-- ===== كود الإعلان (بنر) المطلوب لصفحة المشاهدة ===== -->
+    <!-- ===== كود الإعلان (بنر) المطلوب ===== -->
     <script>
     (function(tw){
         var d = document,
@@ -204,5 +241,6 @@
         l.parentNode.insertBefore(s, l);
     })({})
     </script>
+
 </body>
 </html>
