@@ -7,13 +7,13 @@
     <link rel="stylesheet" href="style.css" />
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
 
-    <!-- ===== مشغل الفيديو Video.js مع إضافة VAST ===== -->
+    <!-- مشغل الفيديو Video.js مع دعم VAST -->
     <link href="https://vjs.zencdn.net/7.20.3/video-js.css" rel="stylesheet" />
     <script src="https://vjs.zencdn.net/7.20.3/video.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/videojs-vast-plugin@1.9.0/dist/videojs-vast.min.js"></script>
 </head>
 <body>
-    <!-- ===== شريط التنقل ===== -->
+    <!-- شريط التنقل (نفس الموجود في index) -->
     <header class="header">
         <div class="header-left">
             <i class="material-icons" onclick="window.location.href='index.html'">arrow_back</i>
@@ -33,15 +33,13 @@
         </div>
     </header>
 
-    <!-- ===== محتوى المشاهدة ===== -->
+    <!-- محتوى المشاهدة -->
     <div class="watch_container">
         <div class="main_video">
-
-            <!-- ===== مشغل الفيديو الجديد (يدعم VAST) ===== -->
+            <!-- مشغل الفيديو الجديد -->
             <div class="video_player_box">
                 <video-js id="my-video" class="vjs-default-skin vjs-big-play-centered"
                     controls preload="auto" width="100%" height="auto">
-                    <!-- مصدر الفيديو (سيتغير بواسطة JavaScript) -->
                     <source id="videoSource" src="" type="video/mp4" />
                 </video-js>
             </div>
@@ -69,11 +67,11 @@
         </div>
 
         <div class="recommended_videos" id="recommended_container">
-            <!-- ستتحمّل بواسطة JavaScript -->
+            <!-- سيتم تحميلها بواسطة JavaScript -->
         </div>
     </div>
 
-    <!-- ===== شاشة القفل ===== -->
+    <!-- شاشة القفل الأبوي -->
     <div id="parent_overlay" class="parent_overlay" style="display: none;">
         <div class="overlay_card">
             <i class="material-icons">lock</i>
@@ -86,13 +84,12 @@
         </div>
     </div>
 
-    <!-- ===== Firebase ===== -->
+    <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
-
     <script>
-        // ===== إعدادات Firebase =====
+        // إعدادات Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyBDIAFYC_cyQJKUPTAbNbFWKaay_iss7ls",
             authDomain: "yotube-clone-72a6d.firebaseapp.com",
@@ -106,7 +103,7 @@
         const auth = firebase.auth();
         const db = firebase.firestore();
 
-        // ===== تسجيل الدخول =====
+        // تسجيل الدخول
         const loginBtn = document.getElementById('login_btn');
         const userStatus = document.getElementById('user_status');
 
@@ -151,54 +148,57 @@
 
         auth.onAuthStateChanged((user) => { updateUI(user); });
 
-        // ===== تحميل الفيديو =====
+        // ===== دالة تحميل الفيديو =====
         function loadWatchPage() {
             const urlParams = new URLSearchParams(window.location.search);
             const videoId = urlParams.get('id');
+            const titleEl = document.getElementById('watchTitle');
+            const iframe = document.querySelector('.video_player_box iframe');
+            const videoSource = document.getElementById('videoSource');
+            const player = videojs('my-video', {
+                controls: true,
+                autoplay: false,
+                preload: 'auto'
+            });
+
             if (!videoId) {
-                document.getElementById('watchTitle').innerText = 'معرف الفيديو غير موجود';
+                titleEl.innerText = 'معرف الفيديو غير موجود';
                 return;
             }
 
             db.collection('videos').doc(videoId).get()
                 .then(doc => {
                     if (!doc.exists) {
-                        document.getElementById('watchTitle').innerText = 'الفيديو غير موجود';
+                        titleEl.innerText = 'الفيديو غير موجود';
                         return;
                     }
                     const video = { id: doc.id, ...doc.data() };
                     document.title = `${video.title} - YouTube Clone`;
-                    document.getElementById('watchTitle').innerText = video.title;
+                    titleEl.innerText = video.title;
 
-                    // ===== تحديث مشغل الفيديو =====
-                    const videoSource = document.getElementById('videoSource');
-                    // استخدم رابط الفيديو من قاعدة البيانات إذا كان موجوداً، وإلا استخدم رابط تجريبي
-                    const videoUrl = video.mp4Url || "https://www.w3schools.com/html/mov_bbb.mp4";
-                    videoSource.src = videoUrl;
+                    // تعيين مصدر الفيديو
+                    const videoUrl = video.mp4Url || '';
+                    if (videoUrl) {
+                        videoSource.src = videoUrl;
+                        player.src({ src: videoUrl, type: 'video/mp4' });
+                    } else {
+                        titleEl.innerText = 'رابط الفيديو غير متوفر';
+                        return;
+                    }
 
-                    // ===== تهيئة مشغل Video.js مع رابط VAST الخاص بك =====
-                    const player = videojs('my-video', {
-                        controls: true,
-                        autoplay: false,
-                        preload: 'auto'
-                    });
-
-                    // رابط VAST الذي حصلت عليه من HilltopAds
+                    // تفعيل VAST
                     const vastUrl = "https://gloomy-association.com/dOm-F.zzdUGfNRvCZgGJUF/sejm/9SupZaUYlskMPQT-cJzyNUDOkj3jMuD_UutqNdzvMz0TO/TccCwiOkQU";
-
-                    // تفعيل إضافة VAST
                     player.vast({
                         url: vastUrl,
-                        playAdAlways: true,    // يعرض الإعلان في كل مرة
-                        adCancelable: false    // لا يسمح بإلغاء الإعلان (اختياري)
+                        playAdAlways: true,
+                        adCancelable: false
                     });
 
-                    // ===== بدء تشغيل الفيديو بعد تحميل الإعلان =====
                     player.ready(function() {
                         player.play();
                     });
 
-                    // تحديث معلومات القناة
+                    // معلومات القناة
                     document.getElementById('channel_pic').src = video.profilePic || 'images/profile.jpg';
                     document.getElementById('channel_name').innerText = video.creator || 'Assem Code';
 
@@ -207,11 +207,10 @@
                 })
                 .catch(err => {
                     console.error('خطأ في تحميل الفيديو:', err);
-                    document.getElementById('watchTitle').innerText = 'حدث خطأ في التحميل';
+                    titleEl.innerText = 'حدث خطأ في التحميل';
                 });
         }
 
-        // ===== تحميل المقترحات =====
         function loadRecommendations(currentId) {
             const recContainer = document.getElementById('recommended_container');
             if (!recContainer) return;
@@ -243,9 +242,7 @@
                 });
         }
 
-        // ===== تشغيل التحميل عند فتح الصفحة =====
         document.addEventListener('DOMContentLoaded', loadWatchPage);
     </script>
-
 </body>
 </html>
