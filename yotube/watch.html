@@ -32,11 +32,14 @@
     <div class="watch_container">
         <div class="main_video">
 
-            <!-- ===== إعلان فيديو (كبنر فوق المشغل) ===== -->
-            <div id="adContainer" style="background:#1a1a1a; border:1px solid #333; border-radius:12px; padding:12px 20px; margin-bottom:16px; text-align:center; display:block;">
-                <span style="color:#aaa; display:block; font-size:12px; margin-bottom:6px;">📢 إعلان</span>
-                <a id="adLink" href="https://gloomy-association.com/dOm-F.zzdUGfNRvCZgGJUF/sejm/9SupZaUYlskMPQT-cJzyNUDOkj3jMuD_UutqNdzvMz0TO/TccCwiOkQU" target="_blank" style="color:#fff; font-weight:bold; font-size:16px; text-decoration:none; display:inline-block; padding:8px 20px; background:#065fd4; border-radius:30px; transition:background 0.2s;">
-                    🎬 اضغط هنا لمشاهدة الإعلان والمتابعة
+            <!-- ===== إعلان HilltopAds (فوق الفيديو) ===== -->
+            <div id="adContainer" style="text-align:center; margin-bottom:16px; background:#1a1a1a; padding:15px; border-radius:12px; border:1px solid #333; direction:ltr;">
+                <span style="color:#aaa; font-size:12px; display:block; margin-bottom:8px;">📢 إعلان</span>
+                <a href="https://gloomy-association.com/d/mCF-zAd.G/NsviZJGOUC/QeimA9auXZ/U/lkkFP/TvcgzdNLDMkF3/MPDyU/t/NszxMl0cO-TpcAwbOxQc" 
+                   target="_blank" 
+                   rel="noopener noreferrer"
+                   style="display:inline-block; background:#065fd4; color:#fff; padding:12px 30px; border-radius:30px; text-decoration:none; font-weight:bold; font-size:16px; transition:background 0.3s;">
+                    🎬 شاهد الإعلان الآن
                 </a>
             </div>
 
@@ -97,7 +100,6 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
     <script>
-        // ===== إعدادات Firebase =====
         const firebaseConfig = {
             apiKey: "AIzaSyBDIAFYC_cyQJKUPTAbNbFWKaay_iss7ls",
             authDomain: "yotube-clone-72a6d.firebaseapp.com",
@@ -111,9 +113,9 @@
         const auth = firebase.auth();
         const db = firebase.firestore();
 
-        // ===== تسجيل الدخول =====
         const loginBtn = document.getElementById('login_btn');
         const userStatus = document.getElementById('user_status');
+        const adContainer = document.getElementById('adContainer');
 
         async function updateUI(user) {
             if (user) {
@@ -125,16 +127,12 @@
                         userStatus.style.background = '#d4edda';
                         userStatus.style.color = '#155724';
                         userStatus.innerText = 'حساب مميز ⭐ Pro';
-                        // إخفاء الإعلان للمستخدم المميز
-                        const adContainer = document.getElementById('adContainer');
                         if (adContainer) adContainer.style.display = 'none';
                     } else {
                         userStatus.style.display = 'inline-block';
                         userStatus.style.background = '#e2e3e5';
                         userStatus.style.color = '#383d41';
                         userStatus.innerText = 'حساب مجاني';
-                        // إظهار الإعلان للمستخدم المجاني
-                        const adContainer = document.getElementById('adContainer');
                         if (adContainer) adContainer.style.display = 'block';
                         if (!doc.exists) {
                             await db.collection('users').doc(user.uid).set({
@@ -148,7 +146,6 @@
             } else {
                 loginBtn.innerText = "تسجيل الدخول";
                 userStatus.style.display = 'none';
-                const adContainer = document.getElementById('adContainer');
                 if (adContainer) adContainer.style.display = 'block';
             }
         }
@@ -164,7 +161,6 @@
 
         auth.onAuthStateChanged((user) => { updateUI(user); });
 
-        // ===== تحميل الفيديو من Firestore (YouTube) =====
         function loadWatchPage() {
             const urlParams = new URLSearchParams(window.location.search);
             const videoId = urlParams.get('id');
@@ -183,17 +179,13 @@
                     document.title = `${video.title} - YouTube Clone`;
                     document.getElementById('watchTitle').innerText = video.title;
 
-                    // ===== تشغيل YouTube =====
                     const iframe = document.getElementById('videoIframe');
                     if (iframe && video.youtubeId) {
                         iframe.src = `https://www.youtube.com/embed/${video.youtubeId}?autoplay=1&enablejsapi=1`;
                     }
 
-                    // تحديث معلومات القناة
                     document.getElementById('channel_pic').src = video.profilePic || 'images/profile.jpg';
                     document.getElementById('channel_name').innerText = video.creator || 'Assem Code';
-
-                    // تحميل المقترحات
                     loadRecommendations(videoId);
                 })
                 .catch(err => {
@@ -202,7 +194,6 @@
                 });
         }
 
-        // ===== تحميل المقترحات =====
         function loadRecommendations(currentId) {
             const recContainer = document.getElementById('recommended_container');
             if (!recContainer) return;
@@ -235,20 +226,6 @@
         }
 
         document.addEventListener('DOMContentLoaded', loadWatchPage);
-    </script>
-
-    <!-- ===== كود الإعلان البرمجي (بنر) ===== -->
-    <script>
-    (function(tw){
-        var d = document,
-            s = d.createElement('script'),
-            l = d.scripts[d.scripts.length - 1];
-        s.settings = tw || {};
-        s.src = "\/\/gloomy-association.com\/c.Ds9z6DbW2-5QljS\/WJQv9hNqzmM\/1jMuThg\/3CNByy0\/3-MfzbUXxzOMD\/gbx_";
-        s.async = true;
-        s.referrerPolicy = 'no-referrer-when-downgrade';
-        l.parentNode.insertBefore(s, l);
-    })({})
     </script>
 
 </body>
