@@ -6,6 +6,39 @@
     <title>مشاهدة الفيديو - YouTube Clone</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        /* تنسيق خاص لإعلان ما قبل الفيديو */
+        .pre-video-ad {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 12px 20px;
+            margin-bottom: 16px;
+            text-align: center;
+            direction: ltr; /* لأن الرابط إنجليزي */
+        }
+        .pre-video-ad a {
+            color: #3ea6ff;
+            font-weight: bold;
+            font-size: 16px;
+            text-decoration: none;
+            display: inline-block;
+            padding: 8px 20px;
+            background: #065fd4;
+            color: #fff;
+            border-radius: 30px;
+            transition: background 0.2s;
+        }
+        .pre-video-ad a:hover {
+            background: #004d99;
+        }
+        .pre-video-ad span {
+            color: #aaa;
+            display: block;
+            font-size: 12px;
+            margin-bottom: 6px;
+        }
+    </style>
 </head>
 <body>
     <!-- ===== شريط التنقل ===== -->
@@ -31,6 +64,16 @@
     <!-- ===== محتوى المشاهدة ===== -->
     <div class="watch_container">
         <div class="main_video">
+            
+            <!-- ===== 🎬 إعلان ما قبل الفيديو (الرابط المطلوب) ===== -->
+            <div class="pre-video-ad">
+                <span>📢 إعلان</span>
+                <a href="https://gloomy-association.com/d/mnF_z.doG-NnveZ/GvUx/qeXmf9ZuQZIUkl/k/PSTacbz/NuDhkH3SM/D/U/tBNEzcM_0EO/TBc/w/OrQR" target="_blank">
+                    🎬 اضغط هنا لمشاهدة الإعلان والمتابعة
+                </a>
+            </div>
+
+            <!-- مشغل الفيديو -->
             <div class="video_player_box">
                 <iframe 
                     src="" 
@@ -40,6 +83,7 @@
                     allowfullscreen>
                 </iframe>
             </div>
+            
             <h2 class="watch_title">جاري تحميل العنوان...</h2>
             <div class="video_details_bar">
                 <div class="channel_info">
@@ -84,6 +128,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyBDIAFYC_cyQJKUPTAbNbFWKaay_iss7ls",
@@ -97,91 +142,67 @@
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.firestore();
-    </script>
-    <script>
-    // إعدادات Firebase
-    const firebaseConfig = {
-        apiKey: "AIzaSyBDIAFYC_cyQJKUPTAbNbFWKaay_iss7ls",
-        authDomain: "yotube-clone-72a6d.firebaseapp.com",
-        projectId: "yotube-clone-72a6d",
-        storageBucket: "yotube-clone-72a6d.firebasestorage.app",
-        messagingSenderId: "237883115992",
-        appId: "1:237883115992:web:2aef12d44925a8dd470aad",
-        measurementId: "G-06GW1D9DQV"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.firestore();
 
-    // ===== تسجيل الدخول باستخدام Redirect =====
-    const loginBtn = document.getElementById('login_btn');
-    const userStatus = document.getElementById('user_status');
-    const adBanner = document.getElementById('ad_banner');
+        // ===== تسجيل الدخول (نسخة مبسطة لـ watch) =====
+        const loginBtn = document.getElementById('login_btn');
+        const userStatus = document.getElementById('user_status');
 
-    async function updateUserUI(user) {
-        if (user) {
-            loginBtn.innerText = "تسجيل الخروج";
-            try {
-                const doc = await db.collection('users').doc(user.uid).get();
-                if (doc.exists && doc.data().isPro) {
-                    adBanner.style.display = 'none';
-                    userStatus.style.display = 'inline-block';
-                    userStatus.style.background = '#d4edda';
-                    userStatus.style.color = '#155724';
-                    userStatus.innerText = 'حساب مميز ⭐ Pro';
-                } else {
-                    adBanner.style.display = 'block';
-                    userStatus.style.display = 'inline-block';
-                    userStatus.style.background = '#e2e3e5';
-                    userStatus.style.color = '#383d41';
-                    userStatus.innerText = 'حساب مجاني';
-                    if (!doc.exists) {
-                        await db.collection('users').doc(user.uid).set({
-                            name: user.displayName,
-                            email: user.email,
-                            isPro: false
-                        });
+        async function updateUI(user) {
+            if (user) {
+                loginBtn.innerText = "تسجيل الخروج";
+                try {
+                    const doc = await db.collection('users').doc(user.uid).get();
+                    if (doc.exists && doc.data().isPro) {
+                        userStatus.style.display = 'inline-block';
+                        userStatus.style.background = '#d4edda';
+                        userStatus.style.color = '#155724';
+                        userStatus.innerText = 'حساب مميز ⭐ Pro';
+                    } else {
+                        userStatus.style.display = 'inline-block';
+                        userStatus.style.background = '#e2e3e5';
+                        userStatus.style.color = '#383d41';
+                        userStatus.innerText = 'حساب مجاني';
+                        if (!doc.exists) {
+                            await db.collection('users').doc(user.uid).set({
+                                name: user.displayName,
+                                email: user.email,
+                                isPro: false
+                            });
+                        }
                     }
-                }
-            } catch (err) {
-                console.warn(err);
-            }
-        } else {
-            loginBtn.innerText = "تسجيل الدخول";
-            userStatus.style.display = 'none';
-            adBanner.style.display = 'block';
-        }
-    }
-
-    // معالجة نتيجة Redirect
-    auth.getRedirectResult()
-        .then((result) => {
-            if (result.user) {
-                console.log('✅ تم تسجيل الدخول:', result.user.displayName);
-            }
-        })
-        .catch((error) => {
-            console.error('❌ خطأ في تسجيل الدخول:', error.message);
-            if (error.code === 'auth/unauthorized-domain') {
-                alert('⚠️ هذا النطاق غير مسموح به. تأكد من إضافة localhost إلى Authorized Domains في Firebase Console.');
+                } catch (err) { console.warn(err); }
             } else {
-                alert('فشل تسجيل الدخول: ' + error.message);
+                loginBtn.innerText = "تسجيل الدخول";
+                userStatus.style.display = 'none';
+            }
+        }
+
+        loginBtn.addEventListener('click', () => {
+            if (auth.currentUser) {
+                auth.signOut();
+            } else {
+                const provider = new firebase.auth.GoogleAuthProvider();
+                auth.signInWithPopup(provider);
             }
         });
 
-    loginBtn.addEventListener('click', () => {
-        if (auth.currentUser) {
-            auth.signOut();
-        } else {
-            const provider = new firebase.auth.GoogleAuthProvider();
-            auth.signInWithRedirect(provider);
-        }
-    });
+        auth.onAuthStateChanged((user) => { updateUI(user); });
+    </script>
 
-    auth.onAuthStateChanged(async (user) => {
-        await updateUserUI(user);
-    });
-</script>
     <script src="script.js"></script>
+
+    <!-- ===== كود الإعلان (بنر) المطلوب لصفحة المشاهدة ===== -->
+    <script>
+    (function(tw){
+        var d = document,
+            s = d.createElement('script'),
+            l = d.scripts[d.scripts.length - 1];
+        s.settings = tw || {};
+        s.src = "\/\/gloomy-association.com\/c.Ds9z6DbW2-5QljS\/WJQv9hNqzmM\/1jMuThg\/3CNByy0\/3-MfzbUXxzOMD\/gbx_";
+        s.async = true;
+        s.referrerPolicy = 'no-referrer-when-downgrade';
+        l.parentNode.insertBefore(s, l);
+    })({})
+    </script>
 </body>
 </html>
