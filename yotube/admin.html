@@ -7,178 +7,35 @@
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <style>
-        .admin-container {
-            max-width: 1200px;
-            margin: 80px auto 30px;
-            padding: 0 20px;
-        }
-        .admin-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 15px;
-            margin-bottom: 30px;
-            padding-bottom: 15px;
-            border-bottom: 2px solid var(--border-color);
-        }
-        .admin-header h1 {
-            font-size: 28px;
-            color: var(--accent-red);
-        }
-        .admin-header .back-link {
-            color: var(--text-secondary);
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-        .admin-header .back-link:hover {
-            color: var(--text-primary);
-        }
-        .video-form {
-            background: var(--card-bg);
-            padding: 25px;
-            border-radius: 16px;
-            border: 1px solid var(--border-color);
-            margin-bottom: 40px;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 16px;
-            align-items: end;
-        }
-        .video-form .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-        .video-form label {
-            font-size: 14px;
-            font-weight: 500;
-            color: var(--text-secondary);
-        }
-        .video-form input, .video-form select {
-            padding: 10px 14px;
-            border-radius: 10px;
-            border: 1px solid var(--border-color);
-            background: var(--bg-secondary);
-            color: #fff;
-            font-size: 15px;
-            outline: none;
-        }
-        .video-form input:focus, .video-form select:focus {
-            border-color: var(--accent-blue);
-        }
-        .video-form .form-actions {
-            display: flex;
-            gap: 10px;
-        }
-        .video-form .btn-save {
-            background: var(--accent-blue);
-            color: #fff;
-            border: none;
-            padding: 10px 28px;
-            border-radius: 30px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background 0.2s;
-            height: 42px;
-        }
-        .video-form .btn-save:hover {
-            background: #2d8fcf;
-        }
-        .video-form .btn-cancel {
-            background: var(--bg-hover);
-            color: var(--text-secondary);
-            border: none;
-            padding: 10px 20px;
-            border-radius: 30px;
-            font-weight: 500;
-            cursor: pointer;
-            height: 42px;
-        }
-        .video-form .btn-cancel:hover {
-            color: #fff;
-        }
-        .videos-table-wrapper {
-            overflow-x: auto;
-            background: var(--card-bg);
-            border-radius: 16px;
-            border: 1px solid var(--border-color);
-            padding: 10px;
-        }
-        .videos-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 14px;
-            min-width: 600px;
-        }
-        .videos-table th {
-            text-align: right;
-            padding: 14px 12px;
-            color: var(--text-secondary);
-            border-bottom: 2px solid var(--border-color);
-            font-weight: 600;
-        }
-        .videos-table td {
-            padding: 12px;
-            border-bottom: 1px solid var(--border-color);
-            vertical-align: middle;
-        }
-        .videos-table tr:hover {
-            background: var(--bg-hover);
-        }
-        .videos-table .thumbnail-cell img {
-            width: 80px;
-            aspect-ratio: 16/9;
-            object-fit: cover;
-            border-radius: 8px;
-        }
-        .videos-table .actions-cell {
-            display: flex;
-            gap: 8px;
-        }
-        .videos-table .actions-cell button {
-            background: transparent;
-            border: none;
-            color: var(--text-secondary);
-            cursor: pointer;
-            padding: 6px 10px;
-            border-radius: 8px;
-            transition: all 0.2s;
-            font-size: 20px;
-        }
-        .videos-table .actions-cell .edit-btn:hover {
-            background: var(--accent-blue);
-            color: #fff;
-        }
-        .videos-table .actions-cell .delete-btn:hover {
-            background: var(--accent-red);
-            color: #fff;
-        }
-        .no-videos-msg {
-            text-align: center;
-            padding: 40px;
-            color: var(--text-secondary);
-            font-size: 18px;
-        }
-        .toast {
-            position: fixed;
-            bottom: 30px;
-            left: 30px;
-            background: var(--card-bg);
-            color: #fff;
-            padding: 14px 28px;
-            border-radius: 12px;
-            border-left: 5px solid var(--accent-blue);
-            box-shadow: var(--shadow);
-            z-index: 9999;
-            font-weight: 500;
-            display: none;
-        }
-        .toast.error {
-            border-left-color: var(--accent-red);
-        }
+        /* نفس الأنماط السابقة مع إضافة تنسيق للحقل الجديد */
+        .admin-container { max-width: 1200px; margin: 80px auto 30px; padding: 0 20px; }
+        .admin-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 30px; padding-bottom: 15px; border-bottom: 2px solid var(--border-color); }
+        .admin-header h1 { font-size: 28px; color: var(--accent-red); }
+        .admin-header .back-link { color: var(--text-secondary); text-decoration: none; display: flex; align-items: center; gap: 5px; }
+        .admin-header .back-link:hover { color: var(--text-primary); }
+        .video-form { background: var(--card-bg); padding: 25px; border-radius: 16px; border: 1px solid var(--border-color); margin-bottom: 40px; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; align-items: end; }
+        .video-form .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .video-form label { font-size: 14px; font-weight: 500; color: var(--text-secondary); }
+        .video-form input, .video-form select { padding: 10px 14px; border-radius: 10px; border: 1px solid var(--border-color); background: var(--bg-secondary); color: #fff; font-size: 15px; outline: none; }
+        .video-form input:focus, .video-form select:focus { border-color: var(--accent-blue); }
+        .video-form .form-actions { display: flex; gap: 10px; }
+        .video-form .btn-save { background: var(--accent-blue); color: #fff; border: none; padding: 10px 28px; border-radius: 30px; font-weight: 600; cursor: pointer; transition: background 0.2s; height: 42px; }
+        .video-form .btn-save:hover { background: #2d8fcf; }
+        .video-form .btn-cancel { background: var(--bg-hover); color: var(--text-secondary); border: none; padding: 10px 20px; border-radius: 30px; font-weight: 500; cursor: pointer; height: 42px; }
+        .video-form .btn-cancel:hover { color: #fff; }
+        .videos-table-wrapper { overflow-x: auto; background: var(--card-bg); border-radius: 16px; border: 1px solid var(--border-color); padding: 10px; }
+        .videos-table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 600px; }
+        .videos-table th { text-align: right; padding: 14px 12px; color: var(--text-secondary); border-bottom: 2px solid var(--border-color); font-weight: 600; }
+        .videos-table td { padding: 12px; border-bottom: 1px solid var(--border-color); vertical-align: middle; }
+        .videos-table tr:hover { background: var(--bg-hover); }
+        .videos-table .thumbnail-cell img { width: 80px; aspect-ratio: 16/9; object-fit: cover; border-radius: 8px; }
+        .videos-table .actions-cell { display: flex; gap: 8px; }
+        .videos-table .actions-cell button { background: transparent; border: none; color: var(--text-secondary); cursor: pointer; padding: 6px 10px; border-radius: 8px; transition: all 0.2s; font-size: 20px; }
+        .videos-table .actions-cell .edit-btn:hover { background: var(--accent-blue); color: #fff; }
+        .videos-table .actions-cell .delete-btn:hover { background: var(--accent-red); color: #fff; }
+        .no-videos-msg { text-align: center; padding: 40px; color: var(--text-secondary); font-size: 18px; }
+        .toast { position: fixed; bottom: 30px; left: 30px; background: var(--card-bg); color: #fff; padding: 14px 28px; border-radius: 12px; border-left: 5px solid var(--accent-blue); box-shadow: var(--shadow); z-index: 9999; font-weight: 500; display: none; }
+        .toast.error { border-left-color: var(--accent-red); }
     </style>
 </head>
 <body>
@@ -204,6 +61,7 @@
             <a href="index.html" class="back-link"><i class="material-icons">home</i> العودة للرئيسية</a>
         </div>
 
+        <!-- نموذج الإضافة مع حقل MP4 -->
         <form id="video_form" class="video-form">
             <input type="hidden" id="edit_id" value="">
             <div class="form-group">
@@ -211,8 +69,14 @@
                 <input type="text" id="video_title" placeholder="مثل: قصه قبل النوم" required>
             </div>
             <div class="form-group">
-                <label for="video_youtubeId">رابط YouTube ID *</label>
-                <input type="text" id="video_youtubeId" placeholder="مثل: NTo1xeRUdgc" required>
+                <label for="video_youtubeId">رابط YouTube ID (للصورة المصغرة)</label>
+                <input type="text" id="video_youtubeId" placeholder="مثل: NTo1xeRUdgc">
+            </div>
+            <!-- الحقل الجديد MP4 -->
+            <div class="form-group">
+                <label for="video_mp4">رابط الفيديو (MP4) *</label>
+                <input type="url" id="video_mp4" placeholder="https://example.com/video.mp4" required>
+                <small style="color: var(--text-secondary); font-size: 12px;">⚠️ رابط مباشر لملف MP4 (من Google Drive أو Firebase Storage أو أي استضافة)</small>
             </div>
             <div class="form-group">
                 <label for="video_category">التصنيف</label>
@@ -254,6 +118,7 @@
         </div>
     </div>
 
+    <!-- شاشة القفل الأبوي -->
     <div id="parent_overlay" class="parent_overlay" style="display: none;">
         <div class="overlay_card">
             <i class="material-icons">lock</i>
@@ -290,6 +155,7 @@
         const form = document.getElementById('video_form');
         const titleInput = document.getElementById('video_title');
         const youtubeIdInput = document.getElementById('video_youtubeId');
+        const mp4Input = document.getElementById('video_mp4');   // جديد
         const categorySelect = document.getElementById('video_category');
         const creatorInput = document.getElementById('video_creator');
         const viewsInput = document.getElementById('video_views');
@@ -362,15 +228,22 @@
             e.preventDefault();
             const title = titleInput.value.trim();
             const youtubeId = youtubeIdInput.value.trim();
-            if (!title || !youtubeId) { showToast('الرجاء ملء الحقول المطلوبة (*)', true); return; }
+            const mp4Url = mp4Input.value.trim();
+
+            if (!title || !mp4Url) {
+                showToast('الرجاء ملء العنوان ورابط MP4', true);
+                return;
+            }
 
             const data = {
-                title, youtubeId,
+                title,
+                youtubeId,
+                mp4Url,   // جديد
                 category: categorySelect.value,
                 creator: creatorInput.value.trim() || 'Assem Code',
                 views: viewsInput.value.trim() || '100K views',
                 time: timeInput.value.trim() || 'اليوم',
-                thumbnail: `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`,
+                thumbnail: youtubeId ? `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg` : 'images/default.jpg',
                 timestamp: Date.now()
             };
 
@@ -397,6 +270,7 @@
                 editIdHidden.value = id;
                 titleInput.value = data.title || '';
                 youtubeIdInput.value = data.youtubeId || '';
+                mp4Input.value = data.mp4Url || '';   // جديد
                 categorySelect.value = data.category || 'stories';
                 creatorInput.value = data.creator || 'Assem Code';
                 viewsInput.value = data.views || '100K views';
@@ -422,11 +296,12 @@
             creatorInput.value = 'Assem Code';
             viewsInput.value = '100K views';
             timeInput.value = 'اليوم';
+            mp4Input.value = '';
             saveBtn.innerText = '➕ إضافة فيديو';
             cancelBtn.style.display = 'none';
         }
 
-        // الرقابة الأبوية
+        // الرقابة الأبوية (نفس الكود السابق)
         const DEFAULT_PIN = "1234";
         const parentBtn = document.getElementById('parent_btn');
         const overlay = document.getElementById('parent_overlay');
