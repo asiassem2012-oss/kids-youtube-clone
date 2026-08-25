@@ -8,19 +8,64 @@
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     
-    <!-- مكتبة Fluid Player لدعم إعلانات VAST -->
-    <script src="https://cdn.fluidplayer.com/v3/current/fluidplayer.min.js"></script>
-    
     <style>
         .video_player_box {
             position: relative;
             width: 100%;
+            padding-top: 56.25%; /* نسبة 16:9 */
             background: #000;
         }
-        .video_player_box video, .video_player_box iframe {
+
+        .video_player_box iframe,
+        #ad_overlay_container {
+            position: absolute;
+            top: 0;
+            left: 0;
             width: 100%;
             height: 100%;
             border: none;
+        }
+
+        /* حاوية الإعلان المستقلة */
+        #ad_overlay_container {
+            z-index: 99;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .ad_skip_button {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.85);
+            color: #fff;
+            border: 1px solid #fff;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            z-index: 100;
+        }
+
+        .ad_skip_button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .ad_tag_badge {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: #fbc02d;
+            color: #000;
+            padding: 4px 8px;
+            font-size: 12px;
+            font-weight: bold;
+            border-radius: 2px;
+            z-index: 100;
         }
     </style>
 </head>
@@ -48,15 +93,30 @@
     <!-- ===== محتوى المشاهدة ===== -->
     <div class="watch_container">
         <div class="main_video">
-            <div class="video_player_box" id="player_wrapper">
-                <!-- مشغل فيديو يدعم الـ VAST الإعلاني -->
-                <video id="my_video_player">
-                    <source src="" type="video/mp4"/>
-                </video>
+            <div class="video_player_box">
+                <!-- طبقة الإعلان Pre-roll (واحدة فقط) -->
+                <div id="ad_overlay_container">
+                    <span class="ad_tag_badge">إعلان</span>
+                    <a id="ad_link" href="#" target="_blank" style="width:100%; height:100%; display:block;">
+                        <video id="single_ad_player" autoplay muted playsinline style="width:100%; height:100%; object-fit:contain;">
+                            <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4" type="video/mp4">
+                        </video>
+                    </a>
+                    <button id="skip_btn" class="ad_skip_button" disabled>تخطي بعد 5</button>
+                </div>
+
+                <!-- مشغل فيديو YouTube الرئيسي -->
+                <iframe 
+                    id="main_youtube_iframe"
+                    src="" 
+                    title="YouTube Video Player" 
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                    allowfullscreen>
+                </iframe>
             </div>
 
-            <!-- مكان الإعلان تحت الفيديو -->
-            <div id="watch-ad-zone" style="text-align: center; margin: 15px 0; min-height: 90px; background: #f9f9f9;"></div>
+            <!-- مكان البنر الإعلاني -->
+            <div id="watch-ad-zone" style="text-align: center; margin: 15px 0; min-height: 90px;"></div>
 
             <h2 class="watch_title">جاري تحميل العنوان...</h2>
             <div class="video_details_bar">
@@ -81,7 +141,7 @@
         </div>
 
         <div class="recommended_videos" id="recommended_container">
-            <!-- تحميل عبر JavaScript -->
+            <!-- سيتم التحميل من script.js -->
         </div>
     </div>
 
@@ -91,24 +151,70 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
     <script>
-        // تشغيل مشغل Fluid Player مع كود الـ VAST الخاص بك
         const vastTagUrl = "https://gloomy-association.com/dOm.FqzYdMGJNSvQZDGAUo/AeCmb9-u/Z/UtlBkLPQTncXz/NWDPke3MMXDxUKtNNIznMA0JOTTHcAw/OgQJ";
+        
+        const adContainer = document.getElementById('ad_overlay_container');
+        const adVideo = document.getElementById('single_ad_player');
+        const skipBtn = document.getElementById('skip_btn');
+        const adLink = document.getElementById('ad_link');
+        let isAdClosed = false;
 
-        const player = fluidPlayer('my_video_player', {
-            vastOptions: {
-                adList: [
-                    {
-                        roll: 'preRoll', // إعلان قبل بداية الفيديو
-                        vastTag: vastTagUrl,
-                        timer: 5 // إمكانية التخطي بعد 5 ثواني
-                    }
-                ]
-            },
-            layoutControls: {
-                autoPlay: true,
-                mute: false
+        // إغلاق الإعلان وتدمير المشغل بتاعه تماماً لمنع أي تكرار
+        function destroyAdAndPlayVideo() {
+            if (isAdClosed) return;
+            isAdClosed = true;
+
+            adVideo.pause();
+            adContainer.remove(); // مسح عنصر الإعلان تماماً من الـ DOM
+
+            // تشغيل فيديو يوتيوب الأساسي
+            const mainIframe = document.getElementById('main_youtube_iframe');
+            if (mainIframe && mainIframe.src) {
+                if (!mainIframe.src.includes('autoplay=1')) {
+                    const sep = mainIframe.src.includes('?') ? '&' : '?';
+                    mainIframe.src += `${sep}autoplay=1`;
+                }
             }
-        });
+        }
+
+        // جلب رابط الإعلان من الـ VAST
+        async function loadVastAd() {
+            try {
+                const res = await fetch(vastTagUrl);
+                const xmlText = await res.text();
+                const xml = new DOMParser().parseFromString(xmlText, "text/xml");
+
+                const media = xml.getElementsByTagName("MediaFile")[0];
+                const click = xml.getElementsByTagName("ClickThrough")[0];
+
+                if (click) adLink.href = click.textContent.trim();
+                if (media) {
+                    adVideo.src = media.textContent.trim();
+                    adVideo.play().catch(() => {});
+                }
+            } catch (e) {
+                console.warn("خطأ في جلب VAST:", e);
+            }
+        }
+
+        // عداد التخطي 5 ثواني
+        let secondsLeft = 5;
+        const adTimer = setInterval(() => {
+            secondsLeft--;
+            if (secondsLeft > 0) {
+                skipBtn.innerText = `تخطي بعد ${secondsLeft}`;
+            } else {
+                clearInterval(adTimer);
+                skipBtn.innerText = "تخطي الإعلان";
+                skipBtn.disabled = false;
+            }
+        }, 1000);
+
+        skipBtn.addEventListener('click', destroyAdAndPlayVideo);
+        adVideo.addEventListener('ended', destroyAdAndPlayVideo);
+
+        // بدء الإعلان فور تحميل الصفحة
+        window.addEventListener('load', loadVastAd);
 
         // Firebase Config
         const firebaseConfig = {
